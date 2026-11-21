@@ -1,0 +1,2545 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>小小钓鱼王 · 三好学生版</title>
+<style>
+:root{
+  --ink:#0a1f2e;--sea:#1c6e8c;--foam:#e8f6fb;--sun:#ffcf5c;
+  --coral:#ff7a59;--mint:#4ecdc4;--grape:#a78bfa;--line:rgba(255,255,255,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;touch-action:none;}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:#06131c;color:var(--foam);user-select:none;}
+canvas#scene{position:fixed;inset:0;width:100%;height:100%;display:block;}
+
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:14px;z-index:30;}
+.screen.active{display:flex;}
+.panel{width:min(600px,100%);max-height:94vh;overflow-y:auto;
+  background:rgba(9,28,42,.92);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  border:1px solid var(--line);border-radius:22px;padding:22px;
+  box-shadow:0 24px 70px rgba(0,0,0,.6);animation:pop .28s cubic-bezier(.2,1.2,.4,1);}
+@keyframes pop{from{transform:scale(.94) translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.panel::-webkit-scrollbar{width:6px}
+.panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
+
+h1{font-size:24px;letter-spacing:2px}
+h2{font-size:18px;margin-bottom:12px;letter-spacing:1px}
+.sub{font-size:13px;color:#8fb6cc;margin-top:6px;line-height:1.6}
+
+.btn{display:block;width:100%;padding:13px;border:none;border-radius:14px;
+  font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;
+  background:linear-gradient(135deg,#2fa8cc,#1c6e8c);color:#fff;
+  transition:transform .12s,filter .12s;letter-spacing:1px;}
+.btn:hover{filter:brightness(1.12)}
+.btn:active{transform:scale(.97)}
+.btn.gold{background:linear-gradient(135deg,#ffcf5c,#f09819);color:#3a2a00}
+.btn.ghost{background:rgba(255,255,255,.08);border:1px solid var(--line);color:var(--foam)}
+.btn.small{padding:9px;font-size:13px;border-radius:11px}
+.btn:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.5)}
+.btn-row{display:flex;gap:10px;margin-top:14px}
+.btn-row .btn{margin:0}
+
+#hud{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;gap:6px;
+  padding:10px 12px;align-items:center;pointer-events:none;flex-wrap:wrap;}
+#hud .chip{pointer-events:auto;display:flex;align-items:center;gap:5px;
+  background:rgba(6,22,34,.68);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border:1px solid var(--line);border-radius:999px;padding:6px 11px;
+  font-size:12px;font-weight:600;white-space:nowrap;}
+#hud .chip b{color:var(--sun);font-size:13px}
+#hud .spacer{flex:1}
+#hud .chip.btn2{cursor:pointer;transition:background .15s}
+#hud .chip.btn2:hover{background:rgba(30,80,110,.9)}
+
+.logo{font-size:28px;font-weight:800;letter-spacing:3px;
+  background:linear-gradient(135deg,#8fe3f5,#ffcf5c);
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.kidpick{display:flex;gap:12px;margin:16px 0 4px}
+.kidcard{flex:1;padding:14px 10px;border-radius:16px;cursor:pointer;text-align:center;
+  background:rgba(255,255,255,.05);border:2px solid transparent;transition:.18s;}
+.kidcard:hover{background:rgba(255,255,255,.1)}
+.kidcard.sel{border-color:var(--sun);background:rgba(255,207,92,.14);box-shadow:0 0 22px rgba(255,207,92,.22)}
+.kidcard .em{font-size:28px}
+.kidcard .nm{font-size:14px;font-weight:700;margin-top:5px}
+.kidcard .gd{font-size:11px;color:#8fb6cc;margin-top:2px}
+
+.zone{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;
+  background:rgba(255,255,255,.05);border:1px solid var(--line);
+  margin-bottom:9px;cursor:pointer;transition:.16s;}
+.zone:hover{background:rgba(255,255,255,.1);transform:translateX(3px)}
+.zone.lock{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.12);cursor:not-allowed}
+.zone.lock .zi{opacity:.6}
+.zone.lock .zn{color:#c9d8e4}
+.zone.lock .zd{color:#8fa4b5}
+.zone.lock .req{opacity:1;filter:none;color:#ffb08f}
+.zone.lock:hover{transform:none}
+.zone .zi{font-size:24px;width:32px;text-align:center}
+.zone .zn{font-size:14px;font-weight:700}
+.zone .zd{font-size:11px;color:#8fb6cc;margin-top:2px}
+.zone .zs{margin-left:auto;font-size:11px;color:var(--sun);font-weight:700;white-space:nowrap}
+.zone .req{margin-left:auto;font-size:11px;color:#ff9b82;font-weight:700;white-space:nowrap}
+
+#screen-quiz{background:rgba(3,12,20,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.qhead{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#8fb6cc;margin-bottom:9px;gap:8px;flex-wrap:wrap}
+.tag{background:rgba(78,205,196,.18);color:var(--mint);padding:3px 9px;border-radius:999px;font-weight:700}
+.tag.streak{background:rgba(255,122,89,.18);color:var(--coral)}
+.tag.topic{background:rgba(167,139,250,.18);color:var(--grape)}
+.qtext{font-size:18px;line-height:1.55;font-weight:600;margin:5px 0 14px;letter-spacing:.4px}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;
+  background:rgba(255,255,255,.06);border:1.5px solid var(--line);
+  font-size:15px;cursor:pointer;transition:.14s;text-align:left;color:var(--foam);
+  font-family:inherit;width:100%;}
+.opt:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3)}
+.opt .k{width:24px;height:24px;flex-shrink:0;border-radius:7px;display:grid;place-items:center;
+  background:rgba(255,255,255,.1);font-size:12px;font-weight:800;color:#9fc6da;}
+.opt.right{background:rgba(78,205,196,.22);border-color:var(--mint)}
+.opt.right .k{background:var(--mint);color:#04262a}
+.opt.wrong{background:rgba(255,122,89,.2);border-color:var(--coral)}
+.opt.wrong .k{background:var(--coral);color:#3a0d00}
+.opt:disabled{cursor:default}
+.timerbar{height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:13px}
+.timerbar i{display:block;height:100%;width:100%;border-radius:3px;
+  background:linear-gradient(90deg,#4ecdc4,#ffcf5c);transition:width .1s linear}
+.explain{margin-top:13px;padding:12px;border-radius:12px;font-size:13px;line-height:1.65;
+  background:rgba(255,255,255,.06);border-left:3px solid var(--sun);color:#c8e2f0;}
+
+.result-top{text-align:center;padding:4px 0 10px}
+.result-top .big{font-size:22px;font-weight:800;letter-spacing:2px;margin-top:6px}
+.result-top .rare{font-size:12px;font-weight:700;margin-top:4px;letter-spacing:1px}
+.result-fish-wrap{display:flex;justify-content:center;margin:4px 0}
+.result-desc{font-size:13px;line-height:1.7;color:#a8c8d8;text-align:center;padding:0 8px}
+
+.dexgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:9px;margin-top:6px}
+.dexcard{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;
+  padding:7px 5px 9px;text-align:center;position:relative;overflow:hidden;cursor:pointer;}
+.dexcard .nm{font-size:11px;font-weight:700;margin-top:1px}
+.dexcard .rl{font-size:9px;margin-top:1px;letter-spacing:.5px}
+.dexcard.locked{opacity:.32;filter:grayscale(1)}
+.dexcard .cnt{position:absolute;top:4px;right:6px;font-size:9px;color:var(--sun);font-weight:700}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:10px 0}
+.stat{background:rgba(255,255,255,.05);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:20px;color:var(--sun)}
+.stat span{font-size:10px;color:#8fb6cc}
+
+.wrongitem{font-size:12px;line-height:1.6;padding:10px 12px;border-radius:11px;
+  background:rgba(255,122,89,.1);border-left:3px solid var(--coral);margin-bottom:7px}
+.wrongitem .qq{font-weight:700;color:#ffd9cc}
+.wrongitem .aa{color:var(--mint);margin-top:3px}
+
+/* 商店 */
+.shopgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.shopitem{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:14px;
+  padding:12px;text-align:center;position:relative;}
+.shopitem .ic{font-size:30px}
+.shopitem .nm{font-size:13px;font-weight:700;margin-top:4px}
+.shopitem .ds{font-size:10px;color:#8fb6cc;margin-top:3px;line-height:1.4;min-height:28px}
+.shopitem .pr{font-size:13px;font-weight:700;color:var(--sun);margin:6px 0}
+.shopitem .btn{padding:8px;font-size:12px;border-radius:9px}
+.shopitem.owned{opacity:.7}
+.shopitem.owned::after{content:'✓ 已拥有';position:absolute;top:6px;right:8px;font-size:9px;color:var(--mint);font-weight:700}
+.shopitem.using{box-shadow:0 0 0 2px var(--sun) inset}
+.shopitem.using::after{content:'使用中';color:var(--sun);position:absolute;top:6px;right:8px;font-size:9px;font-weight:700}
+
+/* 奖章 */
+.medals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.medal{background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:14px 10px;text-align:center;transition:.2s;}
+.medal.on{border-color:var(--sun);background:rgba(255,207,92,.12);box-shadow:0 0 20px rgba(255,207,92,.25)}
+.medal .ic{font-size:32px;filter:grayscale(1);opacity:.4}
+.medal.on .ic{filter:none;opacity:1}
+.medal .nm{font-size:12px;font-weight:700;margin-top:4px}
+.medal .pg{font-size:10px;color:#8fb6cc;margin-top:4px}
+.medal .bar{height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:6px;overflow:hidden}
+.medal .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--sun));width:0%;transition:width .4s}
+
+.cert{border:3px double var(--sun);border-radius:16px;padding:20px;text-align:center;
+  background:linear-gradient(135deg,rgba(255,207,92,.1),rgba(78,205,196,.08));margin:10px 0;}
+.cert .t{font-size:22px;font-weight:800;color:var(--sun);letter-spacing:3px}
+.cert .s{font-size:12px;color:#a8c8d8;margin-top:8px;line-height:1.8}
+
+#hint{position:fixed;left:50%;bottom:108px;transform:translateX(-50%);z-index:18;
+  background:rgba(6,22,34,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border:1px solid var(--line);border-radius:999px;padding:7px 18px;
+  font-size:12px;font-weight:600;color:#bfe0ef;white-space:nowrap;
+  opacity:0;transition:.3s;pointer-events:none;letter-spacing:.5px;max-width:92vw;
+  overflow:hidden;text-overflow:ellipsis;}
+#hint.on{opacity:1}
+
+#bottom{position:fixed;left:0;right:0;bottom:0;z-index:18;padding:14px 14px 22px;
+  display:none;justify-content:center;gap:10px;}
+#bottom.active{display:flex}
+#bottom .btn{width:auto;min-width:170px;padding:15px 30px;
+  box-shadow:0 10px 30px rgba(0,0,0,.45);border-radius:16px;font-size:16px}
+#btn-strike{background:linear-gradient(135deg,#ff7a59,#e0452a);animation:strikePulse 1.6s ease-in-out infinite}
+@keyframes strikePulse{0%,100%{box-shadow:0 10px 30px rgba(224,69,42,.35)}50%{box-shadow:0 10px 40px rgba(255,122,89,.75)}}
+
+#reelUi{position:fixed;left:0;right:0;bottom:0;z-index:19;padding:12px 14px 20px;
+  display:none;flex-direction:column;gap:9px;align-items:center;
+  background:linear-gradient(to top,rgba(4,14,22,.9),rgba(4,14,22,0));}
+#reelUi.active{display:flex}
+.rbrow{width:min(460px,100%);display:flex;align-items:center;gap:9px;font-size:11px;font-weight:700;color:#a8c8d8}
+.rbrow .lb{width:50px;flex-shrink:0}
+.rbar{flex:1;height:14px;border-radius:7px;overflow:hidden;position:relative;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);}
+.rbar i{position:absolute;left:0;top:0;bottom:0;width:0%;border-radius:7px;transition:width .06s linear}
+#rb-tension{background:linear-gradient(90deg,#4ecdc4,#7ed957)}
+#rb-progress{background:linear-gradient(90deg,#2fa8cc,#8fe3f5)}
+#reelBtn{margin-top:2px;width:min(460px,100%);padding:16px;border-radius:18px;border:none;
+  font-size:17px;font-weight:800;letter-spacing:3px;font-family:inherit;
+  background:linear-gradient(135deg,#2fa8cc,#1c6e8c);color:#fff;cursor:pointer;
+  box-shadow:0 8px 26px rgba(28,110,140,.5);transition:transform .08s;}
+#reelBtn:active{transform:scale(.97);background:linear-gradient(135deg,#ffcf5c,#f09819);color:#3a2a00}
+
+#toast{position:fixed;left:50%;top:22%;transform:translate(-50%,-14px);z-index:60;
+  background:rgba(9,28,42,.94);border:1px solid var(--line);border-radius:14px;
+  padding:11px 20px;font-size:14px;font-weight:700;letter-spacing:1px;
+  opacity:0;pointer-events:none;transition:.28s;max-width:88vw;text-align:center;}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* 饵料选择 */
+.baitrow{display:flex;gap:8px;margin:10px 0}
+.baititem{flex:1;padding:12px 8px;border-radius:14px;text-align:center;cursor:pointer;
+  background:rgba(255,255,255,.05);border:2px solid transparent;transition:.18s;}
+.baititem:hover{background:rgba(255,255,255,.1)}
+.baititem.sel{border-color:var(--sun);background:rgba(255,207,92,.14)}
+.baititem .ic{font-size:26px}
+.baititem .nm{font-size:12px;font-weight:700;margin-top:4px}
+.baititem .ds{font-size:10px;color:#8fb6cc;margin-top:3px;line-height:1.4}
+.baititem .ct{font-size:10px;color:var(--sun);font-weight:700;margin-top:3px}
+.baititem .ct.zero{color:#ff7a59}
+
+@media(max-width:520px){
+  .panel{padding:16px;border-radius:18px}
+  h1,.logo{font-size:22px}
+  .qtext{font-size:16px}
+  .opt{font-size:14px;padding:11px}
+  #hint{font-size:11px;bottom:100px}
+  .shopgrid{gap:8px}
+}
+</style>
+</head>
+<body class="vsc-initialized">
+
+<canvas id="scene" width="1920" height="850"></canvas>
+
+<div id="hud">
+  <div class="chip">🪙 <b id="hud-coins">50</b></div>
+  <div class="chip" id="hud-rod-chip">🎣 <b id="hud-rod">竹竿</b></div>
+  <div class="chip" id="hud-bait-chip">🪱 <b id="hud-bait">蚯蚓</b></div>
+  <div class="chip" id="hud-season">🍂 秋</div>
+  <div class="spacer"></div>
+  <div class="chip btn2" id="hud-shop">🏪 商店</div>
+  <div class="chip btn2" id="hud-dex">📖 图鉴</div>
+  <div class="chip btn2" id="hud-medal">🏅 奖章</div>
+  <div class="chip btn2" id="hud-parent">👨‍👩‍👧</div>
+</div>
+
+<div id="hint"></div>
+
+<!-- 首页 -->
+<div class="screen active" id="screen-home">
+  <div class="panel" style="text-align:center">
+    <div style="font-size:42px">🎣</div>
+    <div class="logo" style="margin-top:2px">小小钓鱼王</div>
+    <div class="sub" style="margin-bottom:2px">三好学生版 · 学数学 · 钓真鱼</div>
+
+    <div class="kidpick">
+      <div class="kidcard sel" data-kid="younger">
+        <div class="em">🧒</div><div class="nm">弟弟</div><div class="gd">四年级</div>
+      </div>
+      <div class="kidcard" data-kid="elder">
+        <div class="em">👧</div><div class="nm">姐姐</div><div class="gd">六年级</div>
+      </div>
+    </div>
+
+    <button class="btn" id="btn-start" style="margin-top:14px">进入渔场</button>
+    <div class="sub" style="margin-top:14px;font-size:11px;line-height:1.8">
+      答对数学题赚学识币 → 买饵料和鱼竿 → 按难度解锁新钓点<br>
+      集齐 <b style="color:#ffcf5c">四大学科奖章</b> 就是三好学生！
+    </div>
+  </div>
+</div>
+
+<!-- 水域选择 -->
+<div class="screen" id="screen-zone">
+  <div class="panel">
+    <h2>🗺️ 选择钓点</h2>
+    <div class="sub" style="margin-bottom:10px">按难度从易到难排列：先在小鱼塘练手，收集图鉴再挑战大水面和海钓。</div>
+    <div id="zone-list"></div>
+    <button class="btn ghost small" id="btn-zone-back" style="margin-top:4px">返回</button>
+  </div>
+</div>
+
+<!-- 饵料选择 -->
+<div class="screen" id="screen-bait">
+  <div class="panel">
+    <h2>🪱 选择饵料</h2>
+    <div class="sub" id="bait-season-tip" style="margin-bottom:6px"></div>
+    <div class="baitrow" id="bait-list"></div>
+    <button class="btn gold" id="btn-cast-now" style="margin-top:6px">🎣 抛 竿</button>
+    <button class="btn ghost small" id="btn-bait-back" style="margin-top:8px">返回</button>
+  </div>
+</div>
+
+<!-- 答题 -->
+<div class="screen" id="screen-quiz">
+  <div class="panel">
+    <div class="qhead">
+      <span class="tag topic" id="q-topic">数与代数</span>
+      <span class="tag" id="q-subject">小数</span>
+      <span id="q-timer">25s</span>
+      <span class="tag streak" id="q-streak" style="display:none">🔥 x2</span>
+    </div>
+    <div class="timerbar"><i id="q-bar"></i></div>
+    <div class="qtext" id="q-text">题目</div>
+    <div class="opts" id="q-opts"></div>
+    <div class="explain" id="q-explain" style="display:none"></div>
+  </div>
+</div>
+
+<!-- 结果 -->
+<div class="screen" id="screen-result">
+  <div class="panel">
+    <div class="result-top">
+      <div class="result-fish-wrap"><canvas id="result-fish" width="260" height="140"></canvas></div>
+      <div class="big" id="r-title">钓到了！</div>
+      <div class="rare" id="r-rare"></div>
+    </div>
+    <div class="result-desc" id="r-desc"></div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn gold" id="btn-again">再抛一竿</button>
+      <button class="btn ghost" id="btn-home">回渔场</button>
+    </div>
+  </div>
+</div>
+
+<!-- 商店 -->
+<div class="screen" id="screen-shop">
+  <div class="panel">
+    <h2>🏪 渔具商店</h2>
+    <div class="sub" style="margin-bottom:8px">学识币：<b id="shop-coins" style="color:#ffcf5c">0</b> 🪙</div>
+    <h2 style="font-size:14px;margin:10px 0 8px">🪱 饵料</h2>
+    <div class="shopgrid" id="shop-baits"></div>
+    <h2 style="font-size:14px;margin:14px 0 8px">🎣 鱼竿</h2>
+    <div class="shopgrid" id="shop-rods"></div>
+    <button class="btn ghost small" id="btn-shop-back" style="margin-top:14px">返回</button>
+  </div>
+</div>
+
+<!-- 图鉴 -->
+<div class="screen" id="screen-dex">
+  <div class="panel">
+    <h2>📖 鱼类图鉴</h2>
+    <div class="sub" style="margin-bottom:10px" id="dex-count"></div>
+    <div class="sub" style="margin-bottom:8px;font-size:11px">钓点按难度解锁：图鉴收集越多，能去的水域越远。</div>
+    <div class="dexgrid" id="dex-grid"></div>
+    <button class="btn ghost small" id="btn-dex-back" style="margin-top:14px">返回</button>
+  </div>
+</div>
+
+<!-- 奖章 -->
+<div class="screen" id="screen-medal">
+  <div class="panel">
+    <h2>🏅 学科奖章</h2>
+    <div class="sub" id="medal-tip" style="margin-bottom:8px"></div>
+    <div class="medals" id="medal-list"></div>
+    <div id="cert-area"></div>
+    <button class="btn ghost small" id="btn-medal-back" style="margin-top:14px">返回</button>
+  </div>
+</div>
+
+<!-- 家长 -->
+<div class="screen" id="screen-parent">
+  <div class="panel">
+    <h2>📊 学习报告</h2>
+    <div class="stats" id="p-stats"></div>
+    <h2 style="font-size:14px;margin:14px 0 8px">❌ 错题本</h2>
+    <div id="p-wrong" style="max-height:220px;overflow-y:auto"></div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn ghost small" id="btn-parent-back">返回</button>
+      <button class="btn ghost small" id="btn-reset" style="color:#ff9b82">重置进度</button>
+    </div>
+  </div>
+</div>
+
+<!-- 底部操作 -->
+<div id="bottom" class="active">
+  <button class="btn gold" id="btn-cast" style="display: block;">🎣 抛 竿</button>
+  <button class="btn" id="btn-strike" style="display:none">⚡ 提 竿</button>
+</div>
+
+<!-- 遛鱼 -->
+<div id="reelUi">
+  <div class="rbrow"><span class="lb">💪 张力</span><div class="rbar"><i id="rb-tension"></i></div></div>
+  <div class="rbrow"><span class="lb">🎣 收线</span><div class="rbar"><i id="rb-progress"></i></div></div>
+  <button id="reelBtn">按住收线</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   0. 工具
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const rnd = (a,b) => a + Math.random()*(b-a);
+const rint = (a,b) => Math.floor(rnd(a,b+1));
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+const lerp = (a,b,t) => a + (b-a)*t;
+const easeOutCubic = t => 1 - Math.pow(1-t,3);
+
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove('on'), 1600);
+}
+let hintTimer=null;
+function hint(text, ms=2400){
+  const h = $('#hint');
+  h.textContent = text;
+  h.classList.add('on');
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(()=>h.classList.remove('on'), ms);
+}
+function hideHint(){ clearTimeout(hintTimer); $('#hint').classList.remove('on'); }
+
+/* =========================================================
+   1. 音效
+   ========================================================= */
+let AC=null;
+function audioInit(){
+  if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; } }
+  if(AC && AC.state==='suspended') AC.resume();
+}
+function tone(freq,dur,type='sine',vol=0.07,slideTo=0){
+  if(!AC) return;
+  const t=AC.currentTime, o=AC.createOscillator(), g=AC.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(slideTo,1),t+dur);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+dur+0.02);
+}
+function noise(dur,vol,freq){
+  if(!AC) return;
+  const t=AC.currentTime, len=Math.floor(AC.sampleRate*dur);
+  const buf=AC.createBuffer(1,len,AC.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*(1-i/len);
+  const src=AC.createBufferSource(); src.buffer=buf;
+  const f=AC.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq||900;
+  const g=AC.createGain(); g.gain.value=vol; g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  src.connect(f); f.connect(g); g.connect(AC.destination); src.start(t);
+}
+const SFX={
+  cast(){tone(520,0.2,'sawtooth',0.045,150); noise(0.18,0.05,1600);},
+  splash(){noise(0.28,0.13,700); tone(150,0.18,'triangle',0.07,80);},
+  smallSplash(){noise(0.14,0.07,1400);},
+  probe(){noise(0.07,0.028,2200);},
+  bite(){tone(320,0.08,'sine',0.14,160); noise(0.16,0.10,600); setTimeout(()=>noise(0.12,0.06,1000),60);},
+  strike(){noise(0.16,0.11,1500); tone(680,0.16,'sawtooth',0.05,240);},
+  reelTick(){tone(180,0.03,'square',0.02);},
+  snap(){noise(0.12,0.22,3000); tone(1600,0.12,'square',0.09,300);},
+  right(){[660,880,1100].forEach((f,i)=>setTimeout(()=>tone(f,0.14,'sine',0.085),i*80));},
+  wrong(){tone(300,0.16,'square',0.07,180); setTimeout(()=>tone(180,0.24,'square',0.07,110),140);},
+  legendary(){[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>tone(f,0.22,'sine',0.095),i*95));},
+  fail(){tone(300,0.22,'triangle',0.07,120); setTimeout(()=>tone(200,0.3,'triangle',0.06,90),180);},
+  surge(){tone(90,0.3,'sawtooth',0.05,220); noise(0.25,0.05,400);},
+  medal(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,0.3,'triangle',0.09),i*120));},
+  buy(){tone(880,0.08,'sine',0.08); setTimeout(()=>tone(1100,0.1,'sine',0.08),80);}
+};
+
+/* =========================================================
+   2. 题库（按人教版四/六年级，四大板块）
+   ========================================================= */
+const TOPICS = ['数与代数','图形与几何','统计与概率','数学广角'];
+
+const BANK = {
+  younger: [
+    /* ---------- 数与代数 ---------- */
+    {id:'y01',tp:'数与代数',sub:'大数',q:'一个数由5个亿、7个万和3个一组成，这个数写作？',a:['500070003','500700003','50007003','507000003'],c:0,e:'亿位5，万位7，个位3，其余补0：500070003。'},
+    {id:'y02',tp:'数与代数',sub:'大数',q:'500070003 读作？',a:['五亿零七万零三','五亿七万零三','五亿零七十万零三','五亿零七万三'],c:0,e:'分级：5|0007|0003。万级中间0要读“零”，读作“五亿零七万零三”。'},
+    {id:'y03',tp:'数与代数',sub:'大数',q:'省略“亿”后面的尾数，500070003 约是多少亿？',a:['5亿','6亿','50亿','4亿'],c:0,e:'看千万位是0，四舍五入，约等于5亿。'},
+    {id:'y04',tp:'数与代数',sub:'大数',q:'把 380000 改写成用“万”作单位的数是？',a:['38万','3.8万','380万','0.38万'],c:0,e:'整万数去掉末尾4个0，380000 = 38万。'},
+    {id:'y05',tp:'数与代数',sub:'乘法',q:'125 × 8 = ?',a:['900','1000','1200','800'],c:1,e:'125 × 8 = 1000，常用速算组合。'},
+    {id:'y06',tp:'数与代数',sub:'积的变化',q:'一个因数不变，另一个因数乘5，积会？',a:['不变','乘5','除以5','加5'],c:1,e:'积的变化规律：一个因数不变，另一个因数乘几，积也乘几。'},
+    {id:'y07',tp:'数与代数',sub:'除法',q:'360 ÷ 6 = ?',a:['50','60','66','70'],c:1,e:'36 ÷ 6 = 6，所以 360 ÷ 6 = 60。'},
+    {id:'y08',tp:'数与代数',sub:'商的变化',q:'被除数和除数同时乘10，商？',a:['乘10','除以10','不变','加10'],c:2,e:'商不变规律：被除数和除数同时乘或除以相同的数（0除外），商不变。'},
+    {id:'y09',tp:'数与代数',sub:'验算',q:'除法验算的公式是？',a:['商×除数+余数=被除数','商÷除数=被除数','商+余数=被除数','商×余数=被除数'],c:0,e:'商×除数+余数=被除数，这是除法验算的常用方法。'},
+    {id:'y10',tp:'数与代数',sub:'运算定律',q:'a+b=b+a 是加法的？',a:['结合律','交换律','分配律','性质'],c:1,e:'a+b=b+a 是加法交换律，交换加数位置和不变。'},
+    {id:'y11',tp:'数与代数',sub:'运算定律',q:'(a+b)+c=a+(b+c) 是加法的？',a:['交换律','结合律','分配律','性质'],c:1,e:'加法结合律，改变运算顺序和不变。'},
+    {id:'y12',tp:'数与代数',sub:'运算定律',q:'(a+b)×c = ?',a:['a×c+b×c','a×c+b','a+c×b','a×b+c'],c:0,e:'乘法分配律：(a+b)×c = a×c+b×c。'},
+    {id:'y13',tp:'数与代数',sub:'简便计算',q:'99 × 25 用简便方法计算，下面哪个对？',a:['100×25−25','100×25+25','99×20+5','100×25'],c:0,e:'99 = 100−1，所以 99×25 = 100×25−25 = 2475。'},
+    {id:'y14',tp:'数与代数',sub:'运算顺序',q:'72 ÷ 8 + 3 = ?',a:['12','9','6','15'],c:0,e:'先除后加：72÷8=9，9+3=12。'},
+    {id:'y15',tp:'数与代数',sub:'小数性质',q:'下面哪个小数与 0.50 相等？',a:['0.05','0.5','5.0','0.050'],c:1,e:'小数末尾添上或去掉0大小不变，0.50 = 0.5。'},
+    {id:'y16',tp:'数与代数',sub:'小数点移动',q:'0.1 × 10 = ?',a:['0.01','1','10','0.1'],c:1,e:'小数点向右移一位，0.1 → 1。'},
+    {id:'y17',tp:'数与代数',sub:'单位换算',q:'1米2厘米 = ( ) 米',a:['1.2','1.02','1.002','12'],c:1,e:'2厘米=0.02米，所以1米2厘米=1.02米。这是易错题！'},
+    {id:'y18',tp:'数与代数',sub:'小数加减',q:'0.5 + 0.25 = ?',a:['0.75','0.3','0.55','0.7'],c:0,e:'小数点对齐：0.50 + 0.25 = 0.75。'},
+    {id:'y19',tp:'数与代数',sub:'近似数',q:'求 3.456 保留一位小数约是多少？',a:['3.4','3.5','3.46','3'],c:1,e:'看百分位是5，四舍五入，3.456 ≈ 3.5。'},
+    {id:'y20',tp:'数与代数',sub:'数量关系',q:'单价、数量、总价的关系是？',a:['单价×数量=总价','单价÷数量=总价','总价×数量=单价','单价+数量=总价'],c:0,e:'单价×数量=总价；总价÷数量=单价；总价÷单价=数量。'},
+
+    /* ---------- 图形与几何 ---------- */
+    {id:'y21',tp:'图形与几何',sub:'面积单位',q:'1公顷 = ( ) 平方米',a:['100','1000','10000','1000000'],c:2,e:'边长100米的正方形面积是1公顷，即100×100=10000平方米。'},
+    {id:'y22',tp:'图形与几何',sub:'面积单位',q:'1平方千米 = ( ) 公顷',a:['10','100','1000','10000'],c:1,e:'1平方千米=100公顷=1000000平方米。'},
+    {id:'y23',tp:'图形与几何',sub:'角',q:'1周角 = ( ) 平角',a:['1','2','4','6'],c:1,e:'1周角=360°，1平角=180°，所以1周角=2平角=4直角。'},
+    {id:'y24',tp:'图形与几何',sub:'角',q:'下面哪个角是钝角？',a:['45°','90°','135°','180°'],c:2,e:'钝角大于90°且小于180°，135°是钝角。'},
+    {id:'y25',tp:'图形与几何',sub:'角',q:'分针每分钟转多少度？',a:['1°','6°','30°','60°'],c:1,e:'钟面360°分12大格，每大格30°；分针走一圈60分，每分钟转360÷60=6°。'},
+    {id:'y26',tp:'图形与几何',sub:'三角形',q:'三角形的内角和是多少度？',a:['90°','180°','360°','270°'],c:1,e:'任何三角形的内角和都是180°。'},
+    {id:'y27',tp:'图形与几何',sub:'三角形',q:'三角形任意两边的和与第三边的关系是？',a:['大于第三边','等于第三边','小于第三边','不确定'],c:0,e:'三角形任意两边之和大于第三边。判断时看较短两边之和是否大于最长边。'},
+    {id:'y28',tp:'图形与几何',sub:'等腰三角形',q:'等腰三角形顶角80°，每个底角是多少度？',a:['40°','50°','80°','100°'],c:1,e:'底角=(180°−顶角)÷2=(180°−80°)÷2=50°。'},
+    {id:'y29',tp:'图形与几何',sub:'四边形',q:'长方形、正方形、平行四边形的关系是？',a:['正方形是特殊的长方形，长方形是特殊的平行四边形','三者互不相干','长方形是特殊的正方形','平行四边形是特殊的正方形'],c:0,e:'正方形是特殊的长方形，长方形是特殊的平行四边形。'},
+    {id:'y30',tp:'图形与几何',sub:'梯形',q:'只有一组对边平行的四边形叫什么？',a:['平行四边形','梯形','长方形','菱形'],c:1,e:'只有一组对边平行的四边形叫梯形。'},
+    {id:'y31',tp:'图形与几何',sub:'图形的运动',q:'平移后图形的形状、大小和位置会怎样？',a:['形状变、大小不变','形状大小不变、位置变','形状不变、大小变','都变'],c:1,e:'平移后图形形状、大小都不变，只是位置变了。'},
+    {id:'y32',tp:'图形与几何',sub:'轴对称',q:'轴对称图形中对应点到对称轴的距离？',a:['不相等','相等','相差2倍','无法确定'],c:1,e:'轴对称图形中对应点到对称轴的距离相等，对应点连线与对称轴垂直。'},
+
+    /* ---------- 统计与概率 ---------- */
+    {id:'y33',tp:'统计与概率',sub:'条形统计图',q:'条形统计图的主要特点是？',a:['能看出数量增减变化','能清楚看出数量多少，便于比较','能看出各部分占总数的百分比','能看出平均数'],c:1,e:'条形统计图用直条长短表示数量多少，便于比较。'},
+    {id:'y34',tp:'统计与概率',sub:'平均数',q:'一组数据 3、5、7、9、11，平均数是？',a:['5','6','7','9'],c:2,e:'(3+5+7+9+11)÷5 = 35÷5 = 7。'},
+    {id:'y35',tp:'统计与概率',sub:'平均数',q:'平均数反映的是什么？',a:['最小值','最大值','一组数据的整体水平','某个具体数据'],c:2,e:'平均数介于最小值与最大值之间，反映一组数据的整体水平，不代表每一个数据。'},
+
+    /* ---------- 数学广角 ---------- */
+    {id:'y36',tp:'数学广角',sub:'优化问题',q:'烙饼问题：锅里每次最多烙2张，每面3分钟，烙4张饼最少需要？',a:['12分钟','9分钟','6分钟','15分钟'],c:0,e:'每面3分钟，共8面，每次烙2面，8÷2×3=12分钟。'},
+    {id:'y37',tp:'数学广角',sub:'优化问题',q:'沏茶问题中，最关键的做法是？',a:['按顺序一件一件做','能同时做的事同时做','越快越好','先找茶叶'],c:1,e:'合理安排的共同思路是：能同时做的事情同时做，节省时间。'},
+    {id:'y38',tp:'数学广角',sub:'鸡兔同笼',q:'鸡兔共10个头、28只脚，兔有几只？',a:['2只','3只','4只','5只'],c:2,e:'假设全是鸡：脚=20，差8只；(28−20)÷(4−2)=4只兔。'},
+    {id:'y39',tp:'数学广角',sub:'鸡兔同笼',q:'鸡兔同笼，共20个头、56只脚，鸡有几只？',a:['12只','8只','10只','14只'],c:0,e:'假设全是鸡：脚=40，差16；(56−40)÷2=8只兔，鸡=20−8=12只。'}
+  ],
+
+  elder: [
+    /* ---------- 数与代数 ---------- */
+    {id:'e01',tp:'数与代数',sub:'分数乘法',q:'2/3 × 3/4 = ?',a:['1/2','5/7','6/7','8/9'],c:0,e:'分子相乘、分母相乘：2×3 / 3×4 = 6/12 = 1/2。'},
+    {id:'e02',tp:'数与代数',sub:'倒数',q:'1 的倒数是？',a:['0','1','−1','不存在'],c:1,e:'乘积是1的两个数互为倒数，1×1=1，所以1的倒数是1；0没有倒数。'},
+    {id:'e03',tp:'数与代数',sub:'分数除法',q:'5/8 ÷ 1/4 = ?',a:['5/32','5/2','2/5','20'],c:1,e:'除以一个分数等于乘它的倒数：5/8×4 = 20/8 = 5/2。'},
+    {id:'e04',tp:'数与代数',sub:'分数应用',q:'一个数的 1/3 是 12，这个数是？',a:['4','36','24','48'],c:1,e:'单位“1”未知用除法：12÷1/3 = 12×3 = 36。'},
+    {id:'e05',tp:'数与代数',sub:'工程问题',q:'甲单独做要6天，乙单独做要12天，两人合作要几天？',a:['4天','6天','8天','9天'],c:0,e:'把工作总量看作1，合作时间=1÷(1/6+1/12)=1÷(1/4)=4天。'},
+    {id:'e06',tp:'数与代数',sub:'比',q:'3 : 4 = 9 : ?',a:['10','12','16','8'],c:1,e:'前项3乘3变成9，后项4也要乘3，得12。'},
+    {id:'e07',tp:'数与代数',sub:'比的基本性质',q:'比的前项和后项同时乘5（0除外），比值？',a:['乘5','除以5','不变','加5'],c:2,e:'比的前项和后项同时乘或除以相同的数（0除外），比值不变。'},
+    {id:'e08',tp:'数与代数',sub:'按比分配',q:'甲乙比是2:3，和是50，甲是多少？',a:['20','30','25','15'],c:0,e:'总份数2+3=5，每份50÷5=10，甲=2×10=20。'},
+    {id:'e09',tp:'数与代数',sub:'比例',q:'比例中两个外项的积与两个内项的积有什么关系？',a:['外项积大','内项积大','相等','不确定'],c:2,e:'比例的基本性质：两个外项的积等于两个内项的积。'},
+    {id:'e10',tp:'数与代数',sub:'比例尺',q:'比例尺 1:100000 表示图上1厘米等于实际多少千米？',a:['1千米','10千米','100千米','0.1千米'],c:0,e:'1厘米代表100000厘米=1000米=1千米。注意单位统一。'},
+    {id:'e11',tp:'数与代数',sub:'正反比例',q:'速度一定，路程和时间成什么比例？',a:['正比例','反比例','不成比例','无法判断'],c:0,e:'路程÷时间=速度（一定），比值一定，成正比例。'},
+    {id:'e12',tp:'数与代数',sub:'百分数',q:'20 的 25% 是多少？',a:['4','5','8','2'],c:1,e:'20×25% = 20×0.25 = 5。'},
+    {id:'e13',tp:'数与代数',sub:'折扣',q:'一件商品原价80元，打七折后是多少元？',a:['56','64','72','24'],c:0,e:'打七折就是按70%卖：80×0.7=56元。“八折”是原价80%，不是便宜80%。'},
+    {id:'e14',tp:'数与代数',sub:'成数',q:'“三成五”用百分数表示是多少？',a:['3.5%','35%','350%','0.35%'],c:1,e:'几成就是十分之几，三成五=35%。'},
+    {id:'e15',tp:'数与代数',sub:'利率',q:'利息的计算公式是？',a:['本金×利率×时间','本金+利率×时间','本金×利率+时间','本金÷利率'],c:0,e:'利息=本金×利率×时间；到期取回的钱=本金+利息。'},
+    {id:'e16',tp:'数与代数',sub:'负数',q:'下面哪个数最小？',a:['−5','−2','0','3'],c:0,e:'负数比较：负号后面数字越大，这个负数反而越小，−5 < −2。'},
+    {id:'e17',tp:'数与代数',sub:'负数',q:'0 是正数还是负数？',a:['正数','负数','既不是正数也不是负数','都是'],c:2,e:'0是正负数的分界点，既不是正数也不是负数。'},
+    {id:'e18',tp:'数与代数',sub:'简便计算',q:'25 × 4 × 8 = ？用简便方法',a:['800','100','400','200'],c:0,e:'25×4=100，100×8=800。利用乘法结合律凑整。'},
+    {id:'e19',tp:'数与代数',sub:'分数小数',q:'0.75 化成最简分数是？',a:['3/4','7/5','5/7','4/3'],c:0,e:'0.75=75/100，分子分母同除以25，得3/4。'},
+    {id:'e20',tp:'数与代数',sub:'四则运算',q:'被除数、除数、商的关系中，被除数=？',a:['商×除数','商÷除数','商+除数','商−除数'],c:0,e:'被除数=商×除数；除数=被除数÷商。'},
+
+    /* ---------- 图形与几何 ---------- */
+    {id:'e21',tp:'图形与几何',sub:'圆',q:'同一个圆里，直径和半径的关系是？',a:['d=r','d=2r','d=r/2','d=4r'],c:1,e:'直径d=2r，半径r=d÷2。'},
+    {id:'e22',tp:'图形与几何',sub:'圆的周长',q:'圆的周长公式是？',a:['πr²','2πr','πd²','2πr²'],c:1,e:'周长C=πd=2πr；πr²是面积公式。'},
+    {id:'e23',tp:'图形与几何',sub:'圆的面积',q:'半径3cm的圆，面积是多少？（π取3.14）',a:['9.42','18.84','28.26','6.28'],c:2,e:'S=πr²=3.14×3×3=28.26平方厘米。'},
+    {id:'e24',tp:'图形与几何',sub:'圆环',q:'外圆半径R、内圆半径r，圆环面积公式是？',a:['πR²−πr²','π(R−r)²','2π(R−r)','πR²+πr²'],c:0,e:'圆环面积S=πR²−πr²=π(R²−r²)。'},
+    {id:'e25',tp:'图形与几何',sub:'扇形',q:'圆心角n°的扇形，面积公式是？',a:['πr²×n/360','2πr×n/360','πr²×n','πr×n/360'],c:0,e:'扇形面积=πr²×n/360；弧长=2πr×n/360。'},
+    {id:'e26',tp:'图形与几何',sub:'圆柱',q:'圆柱侧面展开后是一个什么图形？',a:['正方形','长方形','三角形','圆'],c:1,e:'沿高展开是长方形，长=底面周长，宽=圆柱的高。'},
+    {id:'e27',tp:'图形与几何',sub:'圆柱侧面积',q:'圆柱侧面积公式是？',a:['πr²h','2πrh','2πr²','πdh+2πr²'],c:1,e:'S侧=Ch=πdh=2πrh。'},
+    {id:'e28',tp:'图形与几何',sub:'圆柱体积',q:'圆柱体积公式是？',a:['πr²h','2πrh','πr²','1/3πr²h'],c:0,e:'V=Sh=πr²h；1/3πr²h是圆锥体积。'},
+    {id:'e29',tp:'图形与几何',sub:'圆锥体积',q:'圆锥体积公式是？',a:['πr²h','2πrh','1/3πr²h','πr²'],c:2,e:'V=1/3Sh=1/3πr²h。'},
+    {id:'e30',tp:'图形与几何',sub:'等底等高',q:'等底等高的圆柱和圆锥，圆柱体积是圆锥的？',a:['1/3','2倍','3倍','相等'],c:2,e:'等底等高时，圆柱体积是圆锥的3倍，圆锥是圆柱的1/3。'},
+    {id:'e31',tp:'图形与几何',sub:'切割',q:'圆柱沿底面直径纵切，表面积增加几个长方形？',a:['1个','2个','3个','4个'],c:1,e:'纵切增加2个长方形，长=直径，宽=高。'},
+    {id:'e32',tp:'图形与几何',sub:'容积',q:'1升 = ( ) 立方分米',a:['1','10','100','1000'],c:0,e:'1升=1立方分米=1000毫升；1毫升=1立方厘米。'},
+    {id:'e33',tp:'图形与几何',sub:'位置与方向',q:'描述行走路线时，必须说清楚什么？',a:['只要方向','只要距离','出发地、方向、距离','只要速度'],c:2,e:'要说清楚从哪儿出发、向什么方向、走多远。'},
+
+    /* ---------- 统计与概率 ---------- */
+    {id:'e34',tp:'统计与概率',sub:'扇形统计图',q:'扇形统计图用整个圆表示什么？',a:['最大值','平均值','总数（单位1）','最小值'],c:2,e:'整个圆表示总数（单位“1”，即100%），扇形大小表示各部分占总数的百分比。'},
+    {id:'e35',tp:'统计与概率',sub:'扇形统计图',q:'某部分占总数25%，总数200，这部分数量是多少？',a:['25','50','75','100'],c:1,e:'部分数量=总数×百分比=200×25%=50。'},
+    {id:'e36',tp:'统计与概率',sub:'统计图选择',q:'要看出数量增减变化，选哪种统计图？',a:['条形统计图','折线统计图','扇形统计图','都行'],c:1,e:'条形看数量多少，折线看增减变化，扇形看部分与总数关系。'},
+
+    /* ---------- 数学广角 ---------- */
+    {id:'e37',tp:'数学广角',sub:'数与形',q:'1+3+5+7+9 = ?',a:['20','25','30','36'],c:1,e:'1+3+5+…+(2n−1)=n²，共5项，结果=5²=25。'},
+    {id:'e38',tp:'数学广角',sub:'数与形',q:'1+2+3+…+10 = ?',a:['45','50','55','60'],c:2,e:'1+2+…+n=n(n+1)÷2=10×11÷2=55。'},
+    {id:'e39',tp:'数学广角',sub:'鸽巢问题',q:'把7个物体放进3个抽屉，至少有一个抽屉里有几个？',a:['2','3','4','7'],c:1,e:'7÷3=2余1，有余数，至少有一个抽屉里有2+1=3个物体。'}
+  ]
+};
+
+/* =========================================================
+   3. 鱼（真实造型数据）
+   ========================================================= */
+const FISH = {
+  jiyu:    {name:'鲫鱼',rare:0,h:0.46,scales:true,back:'#5a7a8e',mid:'#a8c4d2',belly:'#eef4f8',fin:'#8fa8b5',eye:'#d4a017',pattern:'none',rod:'crucian',zones:['pond','stream'],desc:'体侧扁而高，银灰色，背部较深。我国最常见的淡水鱼，四季可钓。'},
+  baitiao: {name:'白条',rare:0,h:0.28,scales:true,back:'#8fb0c4',mid:'#d0e0ea',belly:'#ffffff',fin:'#b0c8d5',eye:'#e0b020',pattern:'none',rod:'crucian',zones:['pond','stream'],desc:'体细长，银白色，游动迅速，是野钓最常遇到的小鱼。'},
+  mako:    {name:'马口鱼',rare:1,h:0.30,scales:true,back:'#6a8a5e',mid:'#b8d0a8',belly:'#f0f8e8',fin:'#d08040',eye:'#c0a020',pattern:'stripes',rod:'crucian',zones:['stream'],desc:'溪流中的精灵，体侧有垂直条纹，雄鱼繁殖期色彩鲜艳。'},
+  liyu:    {name:'鲤鱼',rare:1,h:0.42,scales:true,back:'#7a6a3a',mid:'#c8b070',belly:'#f0e8c8',fin:'#b87a4a',eye:'#d4a017',pattern:'scales',rod:'carp',zones:['pond','reservoir','river','farm'],desc:'体长侧扁，金黄色，口角有两对须。力大善游，是钓鱼人的最爱。'},
+  caoyu:   {name:'草鱼',rare:1,h:0.32,scales:true,back:'#4a6a4a',mid:'#88a878',belly:'#e8f0e0',fin:'#6a8a6a',eye:'#c0a020',pattern:'scales',rod:'carp',zones:['pond','reservoir','river','farm'],desc:'体长圆筒形，青绿色。吃草长大，成年个体可达十几斤。'},
+  lianyu:  {name:'鲢鳙',rare:2,h:0.40,scales:true,back:'#5a6a7a',mid:'#a8b8c8',belly:'#f0f4f8',fin:'#8a9aaa',eye:'#a0a0a0',pattern:'none',rod:'carp',zones:['reservoir','river','farm'],desc:'头大身宽，银白色。喜欢成群在水面附近滤食浮游生物。'},
+  qingyu:  {name:'青鱼',rare:2,h:0.34,scales:true,back:'#2a3a4a',mid:'#5a7080',belly:'#c8d8e0',fin:'#4a5a6a',eye:'#c0a020',pattern:'scales',rod:'carp',zones:['reservoir'],desc:'“四大家鱼”之一，青黑色，以螺蛳为食，体型巨大。'},
+  jinli:   {name:'锦鲤',rare:2,h:0.44,scales:true,back:'#e07040',mid:'#f0a070',belly:'#fff0e8',fin:'#f09060',eye:'#c0a020',pattern:'koi',rod:'carp',zones:['pond','farm'],desc:'红白相间，观赏鱼之王，钓到它今天运气一定好！'},
+  guiyu:   {name:'鳜鱼',rare:2,h:0.38,scales:true,back:'#8a7a4a',mid:'#c8b878',belly:'#f0e8d0',fin:'#a89060',eye:'#d4a017',pattern:'spots',rod:'carp',zones:['river','reservoir'],desc:'“桃花流水鳜鱼肥”，黄褐色带黑斑，肉质鲜美。'},
+  /* ---- 海钓（海竿 · 沙蚕 / 虾） ---- */
+  lengbeng:{name:'楞蹦鱼',rare:0,prefer:'sandworm',h:0.34,scales:false,back:'#8a7a52',mid:'#c8b98a',belly:'#f0ead6',fin:'#a89468',eye:'#d4a017',pattern:'spots',rod:'sea',zones:['sea'],desc:'本地叫楞蹦鱼，学名矛尾复虾虎鱼。头大口阔，趴在滩涂底层，咬钩最凶，是海钓新手最先钓到的鱼。'},
+  suoyu:   {name:'梭鱼',rare:0,prefer:'sandworm',h:0.24,scales:true,back:'#4a6a80',mid:'#c8d8e4',belly:'#ffffff',fin:'#8aa8bc',eye:'#cfd8de',pattern:'none',rod:'sea',zones:['sea'],desc:'身体像织布的梭子，银白细长，爱在河口咸淡水处成群觅食，中鱼后左右横冲，很好玩。'},
+  luyu:    {name:'鲈鱼',rare:1,prefer:'shrimp',h:0.32,scales:true,back:'#3a4a58',mid:'#8a9aa8',belly:'#eef4f8',fin:'#5a6a78',eye:'#c0c0c0',pattern:'spots',rod:'sea',zones:['sea'],desc:'海鲈是肉食鱼，专追小鱼小虾。海竿挂虾最容易碰到它，中鱼后一个劲儿往深处扎。'},
+  baiyan:  {name:'白眼鱼',rare:1,prefer:'sandworm',h:0.27,scales:true,back:'#5a7285',mid:'#c0d0dc',belly:'#f8fbff',fin:'#93aebf',eye:'#a9bcc6',pattern:'none',rod:'sea',zones:['sea'],desc:'眼睛又大又白，外形和梭鱼像亲戚。常在近岸浅水慢慢游，吃口很轻，漂一动就得提竿。'},
+  hetun:   {name:'河豚',rare:2,prefer:'sandworm',h:0.58,shape:'round',scales:false,back:'#6a7a5a',mid:'#b8c49a',belly:'#f6f8ea',fin:'#8a9a78',eye:'#d4a017',pattern:'spots',rod:'sea',zones:['sea'],desc:'圆滚滚的，一受惊就鼓成小球。它牙齿很厉害，能咬断鱼线，钓到要先小心摘钩再放回去。'},
+  shiban:  {name:'石斑鱼',rare:2,prefer:'shrimp',h:0.40,scales:true,back:'#5a4a3a',mid:'#a89070',belly:'#e8dcc8',fin:'#7a6a5a',eye:'#d4a017',pattern:'spots',rod:'sea',zones:['sea'],desc:'棕褐色带花斑，躲在礁石缝里打埋伏，被叫作“海底老虎”。中鱼后要马上抬竿，别让它钻回礁缝。'},
+  huangqi: {name:'黄鳍金枪鱼',rare:3,prefer:'shrimp',h:0.29,scales:false,tail:'crescent',finlets:true,back:'#1a3a5c',mid:'#4a7aa0',belly:'#e8f0f8',fin:'#ffcf5c',eye:'#c0c0c0',pattern:'none',rod:'sea',zones:['sea'],desc:'背深蓝、鳍亮黄，像一枚鱼雷。游得飞快，是中上层海里的大力士，钓到它手都要抖。'},
+  lanqi:   {name:'蓝鳍金枪鱼',rare:3,prefer:'shrimp',h:0.31,scales:false,tail:'crescent',finlets:true,back:'#122a44',mid:'#2a4a72',belly:'#dce8f4',fin:'#43608a',eye:'#c0c0c0',pattern:'none',rod:'sea',zones:['sea'],desc:'金枪鱼里个头最大、力气最猛的一种，一条就能把鱼线拉得嗡嗡响，是海钓人的终极梦想鱼。'}
+};
+
+const RARITY = [
+  {name:'普通',color:'#a8c8d8'},
+  {name:'稀有',color:'#6ec6ff'},
+  {name:'史诗',color:'#a78bfa'},
+  {name:'传说',color:'#ffcf5c'}
+];
+
+/* 给每种鱼补上 id（图鉴、抽鱼都要用） */
+Object.keys(FISH).forEach(k=>{ FISH[k].id = k; });
+
+/* =========================================================
+   4. 水域 / 鱼竿 / 饵料
+   ========================================================= */
+const ZONES = [
+  {id:'farm',name:'养殖鱼塘',type:'pond',rod:'crucian',stars:'★☆☆☆☆☆',dexReq:0,ease:0.16,icon:'🐟',
+   desc:'静水鱼塘·鱼多口密，最容易上鱼',sky:['#7fc4e8','#d6eef9'],water:['#4fa0b8','#0e4560'],fish:['jiyu','liyu','jinli']},
+  {id:'pond',name:'村口小池塘',type:'pond',rod:'crucian',stars:'★★☆☆☆☆',dexReq:0,ease:0.10,icon:'🪷',
+   desc:'野塘·鱼种杂，吃口比鱼塘滑',sky:['#7fc4e8','#d6eef9'],water:['#3f97bd','#0e4560'],fish:['jiyu','baitiao','liyu','jinli']},
+  {id:'stream',name:'山间溪流',type:'stream',rod:'crucian',stars:'★★★☆☆☆',dexReq:2,ease:0.04,icon:'🏞️',
+   desc:'流水·小鱼机警，浮漂走水',sky:['#8fd3e8','#e0f4fb'],water:['#3fa8a0','#0e5a55'],fish:['mako','baitiao','jiyu']},
+  {id:'reservoir',name:'大水库',type:'lake',rod:'carp',stars:'★★★★☆☆',dexReq:4,ease:-0.08,icon:'🌊',
+   desc:'大水面·鱼大劲足，考验遛鱼',sky:['#1f4a6b','#4e8fa8'],water:['#1a6a8a','#041d33'],fish:['liyu','caoyu','lianyu','qingyu','guiyu']},
+  {id:'river',name:'大河',type:'lake',rod:'carp',stars:'★★★★★☆',dexReq:6,ease:-0.14,icon:'🏔️',
+   desc:'走水·鱼稀个头大，竿要够硬',sky:['#4a7a9a','#a8cfe0'],water:['#2a7a9a','#0a2d40'],fish:['liyu','caoyu','lianyu','guiyu']},
+  {id:'sea',name:'近海',type:'sea',rod:'sea',stars:'★★★★★★',dexReq:9,ease:-0.30,icon:'🌊',
+   desc:'海钓·用海竿配沙蚕或虾，鱼种最丰富',sky:['#3b3f78','#8a7fb8'],water:['#3a4d8a','#101a3d'],
+   fish:['lengbeng','suoyu','luyu','baiyan','hetun','shiban','huangqi','lanqi']}
+];
+
+const RODS = {
+  bamboo:  {name:'竹竿 2.7米', type:'crucian', len:2.7, price:0, bonus:0, desc:'新手赠送', icon:'🎋'},
+  crucian36:{name:'鲫鱼竿 3.6米', type:'crucian', len:3.6, price:60, bonus:0.05, icon:'🎣', desc:'轻便灵敏，野沟钓鲫'},
+  crucian45:{name:'鲫鱼竿 4.5米', type:'crucian', len:4.5, price:140, bonus:0.10, icon:'🎣', desc:'野沟长竿，兼顾小鱼'},
+  carp54:  {name:'鲤鱼竿 5.4米', type:'carp', len:5.4, price:280, bonus:0.06, icon:'🪝', desc:'水库大物入门竿'},
+  carp63:  {name:'鲤鱼竿 6.3米', type:'carp', len:6.3, price:460, bonus:0.10, icon:'🪝', desc:'大河水库通用'},
+  chub72:  {name:'鲢鳙竿 7.2米', type:'carp', len:7.2, price:680, bonus:0.14, icon:'🪝', desc:'大水面巨物竿'},
+  sea27:   {name:'海竿 2.7米', type:'sea', len:2.7, price:900, bonus:0.08, icon:'🎣', desc:'海钓入门竿，抛得远、抗风浪'},
+  sea36:   {name:'海竿 3.6米', type:'sea', len:3.6, price:1300, bonus:0.12, icon:'🎣', desc:'远投海竿，专攻石斑和金枪鱼'}
+};
+
+const ROD_TYPE_NAME = {crucian:'鲫鱼竿',carp:'鲤鱼竿',sea:'海竿'};
+
+const BAITS = {
+  /* ---- 淡水饵料 ---- */
+  worm: {id:'worm',name:'蚯蚓',icon:'🪱',price:0,water:'fresh',desc:'淡水万能基础饵，无限使用',seasonBonus:{spring:0.02,summer:0.02,autumn:0.02,winter:0.02}},
+  blue: {id:'blue',name:'野战蓝鲫',icon:'🟦',price:5,water:'fresh',desc:'夏秋首选，腥香诱鱼',seasonBonus:{spring:0.06,summer:0.12,autumn:0.12,winter:0.02}},
+  red:  {id:'red',name:'红虫',icon:'🔴',price:8,water:'fresh',desc:'春秋冬高手中鱼率高',seasonBonus:{spring:0.16,summer:0.06,autumn:0.14,winter:0.14}},
+  /* ---- 海钓饵料 ---- */
+  sandworm:{id:'sandworm',name:'沙蚕',icon:'🐛',price:4,water:'sea',desc:'海钓万能饵，底栖鱼最爱',seasonBonus:{spring:0.12,summer:0.06,autumn:0.14,winter:0.05}},
+  shrimp:{id:'shrimp',name:'虾',icon:'🦐',price:6,water:'sea',desc:'鲜虾挂钩，肉食性海鱼抢着吃',seasonBonus:{spring:0.05,summer:0.12,autumn:0.10,winter:0.03}}
+};
+
+const BAIT_PRICE_PACK = {worm:0,blue:5,red:8,sandworm:4,shrimp:6}; // 每份价格
+const BAIT_INIT = {worm:Infinity,blue:0,red:0,sandworm:0,shrimp:0};
+
+/* =========================================================
+   5. 存档
+   ========================================================= */
+const DEFAULT_SAVE = {
+  coins: 50,
+  kid:'younger',
+  zone:'pond',
+  rod:'bamboo',
+  baits:{worm:Infinity,blue:0,red:0,sandworm:0,shrimp:0},
+  ownedRods:{bamboo:true},
+  dex:{},
+  wrong:[],
+  correct:0, wrongCount:0,
+  byTopic:{},       // topic -> {ok, all}
+  seen:{},          // qid -> true
+  bestStreak:0,
+  plays:0, broken:0, escaped:0,
+  medals:{}         // topic -> true
+};
+let SAVE = load();
+
+/* JSON 存不了 Infinity，蚯蚓的“无限”要用哨兵重新补上 */
+function cloneSave(){
+  const s = JSON.parse(JSON.stringify(DEFAULT_SAVE));
+  s.baits = Object.assign({}, BAIT_INIT, s.baits || {});
+  s.baits.worm = Infinity;
+  return s;
+}
+
+function load(){
+  let s = null;
+  try{
+    const raw = localStorage.getItem('fishing_king_save_v3');
+    if(raw) s = Object.assign({}, JSON.parse(JSON.stringify(DEFAULT_SAVE)), JSON.parse(raw));
+  }catch(e){}
+  if(!s) s = cloneSave();
+  // 旧存档归一化：补齐新增饵料，清理已下架的鱼竿
+  s.baits = Object.assign({}, BAIT_INIT, s.baits || {});
+  s.baits.worm = Infinity;
+  // 清理旧存档里无效的图鉴键（旧版本鱼没有 id）
+  const dex = {};
+  Object.keys(s.dex || {}).forEach(k=>{ if(FISH[k]) dex[k] = s.dex[k]; });
+  s.dex = dex;
+  const rods = {};
+  Object.keys(RODS).forEach(k=>{ if(s.ownedRods && s.ownedRods[k]) rods[k] = true; });
+  rods.bamboo = true;
+  s.ownedRods = rods;
+  if(!RODS[s.rod]) s.rod = 'bamboo';
+  if(!BAITS[s.currentBait]) s.currentBait = 'worm';
+  return s;
+}
+function save(){
+  try{ localStorage.setItem('fishing_king_save_v3', JSON.stringify(SAVE)); }catch(e){}
+}
+
+/* =========================================================
+   6. Canvas
+   ========================================================= */
+const canvas = $('#scene');
+const ctx = canvas.getContext('2d');
+let W=0,H=0,HZ=0;
+
+function resize(){
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  W = canvas.clientWidth; H = canvas.clientHeight;
+  canvas.width = Math.floor(W*dpr); canvas.height = Math.floor(H*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  HZ = H*0.56;
+}
+window.addEventListener('resize', resize);
+
+const G = {
+  t:0, phase:'idle', phaseT:0,
+  castP:0, castFrom:{x:0,y:0}, castTarget:{x:0,y:0},
+  rodTip:{x:0,y:0}, rodLift:0, rodBend:0,
+  bob:{x:0,y:0,off:0,targetOff:0,tilt:0},
+  ripples:[], splashes:[], floaters:[], deepFishes:[], clouds:[], stars:[],
+  zone:ZONES[0],
+  waitPlan:[], activeBite:null, missCount:0,
+  fight:null, pendingFish:null,
+  streak:0, waterFlash:0,
+  season:'summer'
+};
+
+function getSeason(){
+  const m = new Date().getMonth()+1;
+  if(m>=3&&m<=5) return 'spring';
+  if(m>=6&&m<=8) return 'summer';
+  if(m>=9&&m<=11) return 'autumn';
+  return 'winter';
+}
+const SEASON_NAME = {spring:'🌸 春',summer:'☀️ 夏',autumn:'🍂 秋',winter:'❄️ 冬'};
+
+function initDeco(){
+  G.clouds = Array.from({length:5},()=>({x:rnd(-200,W+200),y:rnd(30,HZ*0.42),s:rnd(0.6,1.5),v:rnd(4,12)}));
+  G.stars = Array.from({length:70},()=>({x:rnd(0,W),y:rnd(0,HZ*0.9),r:rnd(0.5,1.8),p:rnd(0,6.28)}));
+  G.deepFishes = Array.from({length:5},()=>makeDeepFish());
+  G.rodTip = {x:W*0.5,y:HZ-90};
+  G.bob.x = W*0.62; G.bob.y = HZ+6;
+}
+
+function makeDeepFish(){
+  const seaScale = (G.zone && G.zone.type==='sea') ? 1.5 : 1;
+  return {
+    x:rnd(0,W||1200),
+    y:HZ+rnd(50, Math.max(90,H-HZ-40)),
+    s:rnd(10,22)*seaScale,
+    v:rnd(18,52)*(Math.random()<0.5?-1:1),
+    ph:rnd(0,6.28),
+    fish:pick(FISH_LIST_FOR_ZONE(G.zone))
+  };
+}
+function FISH_LIST_FOR_ZONE(z){ return (z.fish||[]).map(id=>FISH[id]).filter(Boolean); }
+
+/* =========================================================
+   7. 真实鱼绘制
+   ========================================================= */
+function drawFish(c, cx, cy, size, fish, t, dir, alpha){
+  dir = dir||1; alpha = alpha===undefined?1:alpha;
+  const L = size;
+  const H = size * fish.h;
+  const bodyL = L * 0.66;
+  const bodyH = H;
+  const wag = Math.sin(t*6) * 0.14;
+
+  c.save();
+  c.globalAlpha = alpha;
+  c.translate(cx, cy);
+  c.scale(dir, 1);
+
+  /* 尾鳍 */
+  c.save();
+  c.translate(-bodyL*0.48, 0);
+  c.rotate(wag*0.6);
+  c.globalAlpha = alpha*0.82;
+  c.fillStyle = fish.fin;
+  if(fish.tail === 'crescent'){
+    /* 金枪鱼：月牙形尾鳍 */
+    c.beginPath();
+    c.moveTo(0,0);
+    c.quadraticCurveTo(-L*0.16,-H*0.58, -L*0.34,-H*0.58);
+    c.quadraticCurveTo(-L*0.22,-H*0.16, -L*0.21,0);
+    c.quadraticCurveTo(-L*0.22,H*0.16, -L*0.34,H*0.58);
+    c.quadraticCurveTo(-L*0.16,H*0.58, 0,0);
+    c.fill();
+  }else{
+    c.beginPath();
+    c.moveTo(0,0);
+    c.quadraticCurveTo(-L*0.30, -H*0.60, -L*0.36, -H*0.12);
+    c.quadraticCurveTo(-L*0.31, 0, -L*0.36, H*0.12);
+    c.quadraticCurveTo(-L*0.30, H*0.60, 0, 0);
+    c.fill();
+  }
+  c.restore();
+
+  /* 背鳍 */
+  c.globalAlpha = alpha*0.8;
+  c.fillStyle = fish.fin;
+  c.beginPath();
+  c.moveTo(-bodyL*0.32, -bodyH*0.42);
+  c.quadraticCurveTo(-bodyL*0.05, -bodyH*1.02, bodyL*0.28, -bodyH*0.32);
+  c.closePath();
+  c.fill();
+
+  /* 臀鳍 */
+  c.beginPath();
+  c.moveTo(-bodyL*0.12, bodyH*0.42);
+  c.quadraticCurveTo(-bodyL*0.02, bodyH*0.82, bodyL*0.12, bodyH*0.34);
+  c.closePath();
+  c.fill();
+
+  /* 身体 */
+  c.globalAlpha = alpha;
+  const grad = c.createLinearGradient(0, -bodyH*0.55, 0, bodyH*0.55);
+  grad.addColorStop(0, fish.back);
+  grad.addColorStop(0.45, fish.mid);
+  grad.addColorStop(1, fish.belly);
+  c.fillStyle = grad;
+  if(fish.shape === 'round'){
+    /* 河豚：圆球身体 + 小刺 */
+    const rx = bodyL*0.46, ry = bodyH*0.50;
+    c.beginPath();
+    c.ellipse(bodyL*0.02, 0, rx, ry, 0, 0, 7);
+    c.fill();
+    c.save();
+    c.globalAlpha = alpha*0.5;
+    c.strokeStyle = fish.fin;
+    c.lineWidth = Math.max(1, size*0.007);
+    for(let i=0;i<16;i++){
+      const a = (i/16)*Math.PI*2 + 0.2;
+      const px = bodyL*0.02 + Math.cos(a)*rx*0.97;
+      const py = Math.sin(a)*ry*0.97;
+      c.beginPath();
+      c.moveTo(px, py);
+      c.lineTo(px + Math.cos(a)*size*0.032, py + Math.sin(a)*size*0.032);
+      c.stroke();
+    }
+    c.restore();
+  }else{
+    c.beginPath();
+    c.moveTo(bodyL*0.5, 0);
+    c.bezierCurveTo(bodyL*0.42, -bodyH*0.50, -bodyL*0.15, -bodyH*0.55, -bodyL*0.50, -bodyH*0.16);
+    c.quadraticCurveTo(-bodyL*0.56, 0, -bodyL*0.50, bodyH*0.16);
+    c.bezierCurveTo(-bodyL*0.15, bodyH*0.55, bodyL*0.42, bodyH*0.50, bodyL*0.5, 0);
+    c.closePath();
+    c.fill();
+  }
+
+  /* 鳞片纹理 */
+  if(fish.scales){
+    c.save();
+    c.globalAlpha = alpha*0.16;
+    c.strokeStyle = '#000';
+    c.lineWidth = Math.max(0.5, size*0.007);
+    for(let row=-2; row<=2; row++){
+      for(let col=-4; col<=4; col++){
+        const px = col*bodyL*0.095 + bodyL*0.04;
+        const py = row*bodyH*0.17;
+        if(Math.abs(px) > bodyL*0.40 || Math.abs(py) > bodyH*0.38) continue;
+        c.beginPath();
+        c.arc(px, py, bodyL*0.062, Math.PI*1.15, Math.PI*1.85);
+        c.stroke();
+      }
+    }
+    c.restore();
+  }
+
+  /* 花纹 */
+  c.save();
+  if(fish.pattern === 'spots'){
+    c.globalAlpha = alpha*0.55;
+    c.fillStyle = 'rgba(30,30,40,.65)';
+    const spots = [[-0.15,-0.15],[0.05,0.12],[-0.3,0.08],[0.22,-0.1],[-0.02,-0.25]];
+    spots.forEach(s=>{
+      c.beginPath();
+      c.ellipse(s[0]*bodyL, s[1]*bodyH, size*0.045, size*0.032, 0.4, 0, 7);
+      c.fill();
+    });
+  }else if(fish.pattern === 'stripes'){
+    c.globalAlpha = alpha*0.4;
+    c.fillStyle = 'rgba(40,50,60,.6)';
+    for(let i=0;i<4;i++){
+      const px = -bodyL*0.3 + i*bodyL*0.18;
+      c.beginPath();
+      c.ellipse(px, 0, bodyL*0.025, bodyH*0.42, 0, 0, 7);
+      c.fill();
+    }
+  }else if(fish.pattern === 'koi'){
+    c.globalAlpha = alpha*0.7;
+    c.fillStyle = '#ffffff';
+    c.beginPath();
+    c.ellipse(-bodyL*0.1, -bodyH*0.12, bodyL*0.18, bodyH*0.28, 0.3, 0, 7);
+    c.fill();
+    c.beginPath();
+    c.ellipse(bodyL*0.18, bodyH*0.05, bodyL*0.12, bodyH*0.20, -0.2, 0, 7);
+    c.fill();
+  }
+  c.restore();
+
+  /* 金枪鱼：背腹黄色小鳍 */
+  if(fish.finlets){
+    c.save();
+    c.globalAlpha = alpha*0.9;
+    c.fillStyle = '#ffd75c';
+    for(let i=0;i<4;i++){
+      const px = -bodyL*0.22 + i*bodyL*0.12;
+      c.beginPath();
+      c.moveTo(px, -bodyH*0.30);
+      c.lineTo(px - bodyL*0.035, -bodyH*0.52);
+      c.lineTo(px + bodyL*0.02, -bodyH*0.28);
+      c.closePath(); c.fill();
+      c.beginPath();
+      c.moveTo(px, bodyH*0.28);
+      c.lineTo(px - bodyL*0.035, bodyH*0.50);
+      c.lineTo(px + bodyL*0.02, bodyH*0.26);
+      c.closePath(); c.fill();
+    }
+    c.restore();
+  }
+
+  /* 侧线 */
+  c.save();
+  c.globalAlpha = alpha*0.22;
+  c.strokeStyle = 'rgba(0,0,0,.5)';
+  c.lineWidth = Math.max(0.5, size*0.006);
+  c.beginPath();
+  c.moveTo(bodyL*0.38, -bodyH*0.02);
+  c.quadraticCurveTo(0, bodyH*0.05, -bodyL*0.4, 0);
+  c.stroke();
+  c.restore();
+
+  /* 鳃盖 */
+  c.save();
+  c.globalAlpha = alpha*0.20;
+  c.strokeStyle = '#000';
+  c.lineWidth = Math.max(0.5, size*0.008);
+  c.beginPath();
+  c.moveTo(bodyL*0.26, -bodyH*0.30);
+  c.quadraticCurveTo(bodyL*0.16, 0, bodyL*0.26, bodyH*0.30);
+  c.stroke();
+  c.restore();
+
+  /* 胸鳍 */
+  c.save();
+  c.globalAlpha = alpha*0.65;
+  c.fillStyle = fish.fin;
+  c.translate(bodyL*0.16, bodyH*0.16);
+  c.rotate(Math.sin(t*5)*0.28 - 0.28);
+  c.beginPath();
+  c.ellipse(0, 0, bodyL*0.14, bodyH*0.075, 0, 0, 7);
+  c.fill();
+  c.restore();
+
+  /* 眼睛 */
+  c.save();
+  c.globalAlpha = alpha;
+  const ex = bodyL*0.35, ey = -bodyH*0.17;
+  c.fillStyle = '#fff';
+  c.beginPath(); c.arc(ex, ey, size*0.042, 0, 7); c.fill();
+  c.fillStyle = fish.eye;
+  c.beginPath(); c.arc(ex+size*0.006, ey, size*0.026, 0, 7); c.fill();
+  c.fillStyle = '#fff';
+  c.beginPath(); c.arc(ex+size*0.014, ey-size*0.011, size*0.009, 0, 7); c.fill();
+  c.restore();
+
+  /* 嘴 */
+  c.save();
+  c.globalAlpha = alpha*0.55;
+  c.strokeStyle = 'rgba(0,0,0,.6)';
+  c.lineWidth = Math.max(0.5, size*0.008);
+  c.beginPath();
+  c.moveTo(bodyL*0.49, -bodyH*0.01);
+  c.quadraticCurveTo(bodyL*0.52, bodyH*0.02, bodyL*0.49, bodyH*0.06);
+  c.stroke();
+  c.restore();
+
+  /* 鲤鱼胡须 */
+  if(fish.rod==='carp' && fish.name==='鲤鱼'){
+    c.save();
+    c.globalAlpha = alpha*0.55;
+    c.strokeStyle = 'rgba(0,0,0,.4)';
+    c.lineWidth = Math.max(0.5, size*0.006);
+    c.beginPath();
+    c.moveTo(bodyL*0.5, bodyH*0.01);
+    c.quadraticCurveTo(bodyL*0.58, bodyH*0.06, bodyL*0.56, bodyH*0.1);
+    c.stroke();
+    c.beginPath();
+    c.moveTo(bodyL*0.5, bodyH*0.02);
+    c.quadraticCurveTo(bodyL*0.55, bodyH*0.1, bodyL*0.52, bodyH*0.14);
+    c.stroke();
+    c.restore();
+  }
+
+  c.restore();
+}
+
+/* =========================================================
+   8. 场景渲染
+   ========================================================= */
+function drawScene(dt){
+  const z = G.zone, t = G.t;
+  const isNight = (z.id==='sea');
+
+  const sky = ctx.createLinearGradient(0,0,0,HZ);
+  sky.addColorStop(0,z.sky[0]); sky.addColorStop(1,z.sky[1]);
+  ctx.fillStyle = sky; ctx.fillRect(0,0,W,HZ+2);
+
+  if(isNight){
+    ctx.save();
+    for(const s of G.stars){
+      ctx.globalAlpha = 0.3 + 0.55*Math.abs(Math.sin(t*1.2+s.p));
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  ctx.save();
+  const sx=W*0.82, sy=HZ*0.26, sr=Math.min(W,H)*0.045;
+  const glow = ctx.createRadialGradient(sx,sy,0,sx,sy,sr*3.4);
+  if(isNight){
+    glow.addColorStop(0,'rgba(220,235,255,.9)');
+    glow.addColorStop(.35,'rgba(180,210,255,.26)');
+    glow.addColorStop(1,'rgba(180,210,255,0)');
+  }else{
+    glow.addColorStop(0,'rgba(255,236,160,.95)');
+    glow.addColorStop(.35,'rgba(255,214,90,.3)');
+    glow.addColorStop(1,'rgba(255,214,90,0)');
+  }
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.arc(sx,sy,sr*3.4,0,7); ctx.fill();
+  ctx.fillStyle = isNight?'#e8f1ff':'#ffe27a';
+  ctx.beginPath(); ctx.arc(sx,sy,sr,0,7); ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = isNight ? 0.14 : 0.72;
+  ctx.fillStyle = '#fff';
+  for(const cl of G.clouds){
+    cl.x += cl.v*dt;
+    if(cl.x > W+220) cl.x = -220;
+    drawCloud(cl.x, cl.y, 52*cl.s);
+  }
+  ctx.restore();
+
+  drawMountains(isNight);
+
+  const wat = ctx.createLinearGradient(0,HZ,0,H);
+  wat.addColorStop(0,z.water[0]); wat.addColorStop(1,z.water[1]);
+  ctx.fillStyle = wat; ctx.fillRect(0,HZ,W,H-HZ+2);
+
+  ctx.save();
+  ctx.globalAlpha = 0.065;
+  ctx.fillStyle = '#fff';
+  for(let i=0;i<5;i++){
+    const bx = i*W/5 + Math.sin(t*0.3+i)*40;
+    ctx.beginPath();
+    ctx.moveTo(bx,HZ); ctx.lineTo(bx+50,HZ);
+    ctx.lineTo(bx+120,H); ctx.lineTo(bx-30,H);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+
+  for(const f of G.deepFishes){
+    f.x += f.v*dt;
+    if(f.v>0 && f.x>W+90){ f.x=-90; f.y=HZ+rnd(50,Math.max(90,H-HZ-40)); }
+    if(f.v<0 && f.x<-90){ f.x=W+90; f.y=HZ+rnd(50,Math.max(90,H-HZ-40)); }
+    if(!f.fish) f.fish = pick(FISH_LIST_FOR_ZONE(z));
+    const yy = f.y + Math.sin(t*1.6+f.ph)*6;
+    drawFish(ctx, f.x, yy, f.s, f.fish, t+f.ph, f.v>0?1:-1, isNight?0.68:0.55);
+  }
+
+  const boatX = W*0.30;
+  const boatBob = Math.sin(t*1.4)*3.2;
+  drawBoat(boatX, HZ+boatBob, t);
+
+  const surf = ctx.createLinearGradient(0,HZ-6,0,HZ+34);
+  surf.addColorStop(0,'rgba(255,255,255,.30)');
+  surf.addColorStop(0.5,'rgba(255,255,255,.10)');
+  surf.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle = surf; ctx.fillRect(0,HZ-6,W,44);
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,.4)';
+  ctx.lineWidth = 1.6;
+  for(let i=0;i<4;i++){
+    ctx.globalAlpha = 0.38 - i*0.08;
+    ctx.beginPath();
+    for(let x=0;x<=W;x+=8){
+      const y = HZ + i*9 + Math.sin((x*0.02)+t*1.5+i*0.9)*(2.2-i*0.3);
+      x===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  drawLine(boatX, boatBob, t);
+  drawFloat(t);
+
+  for(let i=G.ripples.length-1;i>=0;i--){
+    const r = G.ripples[i];
+    r.life -= dt;
+    if(r.life <= 0){ G.ripples.splice(i,1); continue; }
+    const p = 1 - r.life/r.max;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255,255,255,${0.55*(1-p)})`;
+    ctx.lineWidth = r.w||2;
+    for(let k=0;k<2;k++){
+      const rad = 6 + p*r.size + k*18;
+      ctx.beginPath();
+      ctx.ellipse(r.x, r.y, rad, rad*0.3, 0, 0, 7);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  for(let i=G.splashes.length-1;i>=0;i--){
+    const s = G.splashes[i];
+    s.vy += 380*dt; s.x += s.vx*dt; s.y += s.vy*dt; s.life -= dt;
+    if(s.life <= 0 || s.y > HZ+40){ G.splashes.splice(i,1); continue; }
+    ctx.save();
+    ctx.globalAlpha = clamp(s.life*2,0,1);
+    ctx.fillStyle = 'rgba(235,250,255,.9)';
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fill();
+    ctx.restore();
+  }
+
+  for(let i=G.floaters.length-1;i>=0;i--){
+    const f = G.floaters[i];
+    f.y -= 42*dt; f.life -= dt;
+    if(f.life <= 0){ G.floaters.splice(i,1); continue; }
+    ctx.save();
+    ctx.globalAlpha = clamp(f.life,0,1);
+    ctx.fillStyle = f.color;
+    ctx.font = '800 20px -apple-system,"PingFang SC",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(f.text, f.x, f.y);
+    ctx.restore();
+  }
+}
+
+function drawCloud(x,y,s){
+  ctx.beginPath();
+  ctx.arc(x,y,s*0.55,0,7);
+  ctx.arc(x+s*0.55,y-s*0.18,s*0.42,0,7);
+  ctx.arc(x+s*1.05,y,s*0.48,0,7);
+  ctx.arc(x+s*0.5,y+s*0.2,s*0.45,0,7);
+  ctx.fill();
+}
+
+function drawMountains(isNight){
+  const base = HZ+4;
+  const layers = [
+    {h:HZ*0.30, c:isNight?'rgba(30,44,80,.75)':'rgba(120,170,190,.55)', off:0},
+    {h:HZ*0.20, c:isNight?'rgba(22,32,62,.85)':'rgba(90,145,170,.65)', off:140}
+  ];
+  for(const L of layers){
+    ctx.beginPath();
+    ctx.moveTo(-50,base);
+    for(let x=-50;x<=W+50;x+=10){
+      const y = base - L.h*(0.55 + 0.45*Math.sin((x+L.off)*0.0042) + 0.22*Math.sin((x+L.off)*0.0113+1.7));
+      ctx.lineTo(x,y);
+    }
+    ctx.lineTo(W+50,base);
+    ctx.closePath();
+    ctx.fillStyle = L.c;
+    ctx.fill();
+  }
+}
+
+function drawBoat(x,y,t){
+  const tilt = Math.sin(t*1.2)*0.02;
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.rotate(tilt);
+
+  const bw = Math.min(W*0.19,128);
+  const bh = bw*0.30;
+
+  ctx.beginPath();
+  ctx.moveTo(-bw*0.5,-bh*0.15);
+  ctx.quadraticCurveTo(-bw*0.52,bh*0.85,-bw*0.24,bh*0.95);
+  ctx.lineTo(bw*0.24,bh*0.95);
+  ctx.quadraticCurveTo(bw*0.52,bh*0.85,bw*0.5,-bh*0.15);
+  ctx.closePath();
+  const wood = ctx.createLinearGradient(0,-bh,0,bh);
+  wood.addColorStop(0,'#a8663a');
+  wood.addColorStop(1,'#6d3d1f');
+  ctx.fillStyle = wood;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.28)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-bw*0.5,-bh*0.15);
+  ctx.lineTo(bw*0.5,-bh*0.15);
+  ctx.strokeStyle = '#c98a56';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  const cur = SAVE.kid;
+  drawKid(-bw*0.16,-bh*0.5,1, cur==='younger', t);
+  drawKid(bw*0.16,-bh*0.5,1, cur==='elder', t+1.4);
+
+  const rodX = bw*0.16, rodY = -bh*1.55;
+  const lift = G.rodLift, bend = G.rodBend;
+
+  const tipX = rodX + bw*0.95 + lift*bw*0.18;
+  const tipY = rodY - bh*0.55 - lift*bh*2.2 + bend*bh*0.9;
+  const ctrlX = rodX + bw*0.55;
+  const ctrlY = rodY - bh*1.5 - lift*bh*1.2 + bend*bh*1.4;
+
+  ctx.beginPath();
+  ctx.moveTo(rodX,rodY);
+  ctx.quadraticCurveTo(ctrlX,ctrlY,tipX,tipY);
+  ctx.strokeStyle = '#3a2a1a';
+  ctx.lineWidth = 3.2;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(tipX,tipY,1.8,0,7);
+  ctx.fillStyle = '#ffcf5c';
+  ctx.fill();
+
+  G.rodTip.x = x + tipX;
+  G.rodTip.y = y + tipY;
+
+  ctx.restore();
+}
+
+function drawKid(x,y,s,active,t){
+  const bob = Math.sin(t*2.2)*1.6;
+  ctx.save();
+  ctx.translate(x,y+bob);
+  ctx.scale(s,s);
+
+  ctx.fillStyle = active ? '#2fa8cc' : '#4a5f70';
+  ctx.beginPath();
+  ctx.moveTo(-8,16);
+  ctx.quadraticCurveTo(-9,-2,0,-2);
+  ctx.quadraticCurveTo(9,-2,8,16);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#f7d2b0';
+  ctx.beginPath(); ctx.arc(0,-10,7.5,0,7); ctx.fill();
+
+  ctx.fillStyle = active ? '#ffcf5c' : '#8fa4b5';
+  ctx.beginPath(); ctx.arc(0,-13,8,Math.PI,0); ctx.fill();
+  ctx.fillRect(-11,-13,22,3);
+
+  ctx.fillStyle = '#20313f';
+  ctx.beginPath(); ctx.arc(-2.6,-9.5,1.2,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(2.6,-9.5,1.2,0,7); ctx.fill();
+
+  ctx.restore();
+
+  if(active){
+    ctx.save();
+    ctx.globalAlpha = 0.5 + 0.35*Math.sin(t*4);
+    ctx.fillStyle = '#ffcf5c';
+    ctx.beginPath();
+    const ay = y+bob-26;
+    ctx.moveTo(x,ay);
+    ctx.lineTo(x-5,ay-8);
+    ctx.lineTo(x+5,ay-8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawLine(boatX, boatBob, t){
+  const showLine = ['casting','waiting','strikeAnim','quiz','fight'].includes(G.phase);
+  if(!showLine) return;
+  const tip = G.rodTip;
+  const bx = G.bob.x, by = G.bob.y;
+
+  ctx.save();
+  if(G.phase==='fight' && G.fight){
+    const tension = G.fight.tension/100;
+    ctx.strokeStyle = `rgba(255,255,255,${0.55+tension*0.4})`;
+    ctx.lineWidth = 1.4 + tension*0.8;
+  }else if(G.phase==='strikeAnim'){
+    ctx.strokeStyle = 'rgba(255,255,255,.95)';
+    ctx.lineWidth = 2.2;
+  }else{
+    ctx.strokeStyle = 'rgba(255,255,255,.6)';
+    ctx.lineWidth = 1.2;
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(tip.x, tip.y);
+  const mx = (tip.x+bx)/2;
+  let sag = 24;
+  if(G.phase==='fight' && G.fight) sag = 24*(1-G.fight.tension/130);
+  if(G.phase==='strikeAnim') sag = -10;
+  const my = (tip.y+by)/2 + sag;
+  const jit = (G.phase==='fight' && G.fight) ? G.fight.tension*0.05 : 0;
+  ctx.quadraticCurveTo(mx + Math.sin(t*30)*jit, my, bx, by);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawFloat(t){
+  const showFloat = ['casting','waiting','strikeAnim','quiz','fight'].includes(G.phase);
+  if(!showFloat) return;
+  const x = G.bob.x;
+  const y = G.bob.y + G.bob.off;
+  const tilt = G.bob.tilt;
+
+  // 水下鱼影
+  if(G.activeBite && G.activeBite.type==='real'){
+    const p = clamp((G.phaseT-G.activeBite.start)/0.4,0,1);
+    ctx.save();
+    ctx.globalAlpha = 0.32*p;
+    const fy = HZ+48+Math.sin(t*10)*4;
+    drawFish(ctx, x+Math.sin(t*8)*8, fy, 28, G.pendingFish||FISH.jiyu, t*2, 1, 0.5);
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,0,W,HZ+1); ctx.clip();
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.rotate(tilt);
+
+  ctx.beginPath();
+  ctx.moveTo(0,9); ctx.lineTo(0,16);
+  ctx.strokeStyle = '#2b3a46'; ctx.lineWidth = 2; ctx.stroke();
+
+  const bg = ctx.createLinearGradient(-5,-9,5,9);
+  bg.addColorStop(0,'#fff');
+  bg.addColorStop(0.45,'#f5f0e6');
+  bg.addColorStop(1,'#d8cfc0');
+  ctx.beginPath();
+  ctx.ellipse(0,0,4.8,9.5,0,0,7);
+  ctx.fillStyle = bg; ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.15)'; ctx.lineWidth = 0.8; ctx.stroke();
+
+  ctx.beginPath();
+  ctx.ellipse(0,-2,4.8,3.2,0,0,7);
+  ctx.fillStyle = 'rgba(255,90,60,.85)'; ctx.fill();
+
+  const tailH = 30;
+  for(let i=0;i<5;i++){
+    const segH = tailH/5;
+    ctx.beginPath();
+    ctx.rect(-1.25, -9-(i+1)*segH, 2.5, segH);
+    ctx.fillStyle = (i%2===0) ? '#ff4d3d' : '#ffd93d';
+    ctx.fill();
+  }
+  ctx.beginPath();
+  ctx.arc(0,-9-tailH,1.6,0,7);
+  ctx.fillStyle = '#ffe97a'; ctx.fill();
+
+  ctx.restore();
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,HZ+1,W,H-HZ); ctx.clip();
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  ctx.translate(x,y);
+  ctx.rotate(tilt);
+  ctx.beginPath();
+  ctx.moveTo(0,9); ctx.lineTo(0,16);
+  ctx.strokeStyle = '#2b3a46'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(0,0,4.8,9.5,0,0,7);
+  ctx.fillStyle = '#e8e2d6'; ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(0,-2,4.8,3.2,0,0,7);
+  ctx.fillStyle = 'rgba(255,90,60,.6)'; ctx.fill();
+  for(let i=0;i<5;i++){
+    const segH = tailH/5;
+    ctx.beginPath();
+    ctx.rect(-1.25,-9-(i+1)*segH,2.5,segH);
+    ctx.fillStyle = (i%2===0) ? 'rgba(255,77,61,.6)' : 'rgba(255,217,61,.6)';
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.restore();
+
+  if(G.activeBite && G.activeBite.type==='real'){
+    ctx.save();
+    const pulse = (Math.sin(t*12)+1)/2;
+    ctx.globalAlpha = 0.3 + pulse*0.35;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(x,HZ+4,16+pulse*10,5+pulse*3,0,0,7);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/* =========================================================
+   9. 状态更新
+   ========================================================= */
+function setPhase(p){ G.phase = p; G.phaseT = 0; }
+
+function update(dt){
+  G.bob.off = lerp(G.bob.off, G.bob.targetOff, Math.min(1, dt*14));
+  G.bob.tilt = lerp(G.bob.tilt, Math.sin(G.t*2.6)*0.045 + (G.activeBite?Math.sin(G.t*18)*0.03:0), Math.min(1,dt*8));
+
+  const targetLift = (G.phase==='strikeAnim'||G.phase==='fight'||G.phase==='quiz') ? 1 : 0;
+  G.rodLift = lerp(G.rodLift, targetLift, Math.min(1, dt*6));
+
+  let targetBend = 0;
+  if(G.phase==='fight' && G.fight) targetBend = clamp(G.fight.tension/100,0,1);
+  if(G.phase==='strikeAnim') targetBend = 0.5;
+  G.rodBend = lerp(G.rodBend, targetBend, Math.min(1, dt*8));
+
+  switch(G.phase){
+    case 'casting':
+      G.castP += dt/0.85;
+      if(G.castP >= 1){ G.castP = 1; landFloat(); }
+      break;
+    case 'waiting': updateWaiting(dt); break;
+    case 'strikeAnim':
+      if(G.phaseT > 0.62) openQuiz();
+      break;
+    case 'fight': updateFight(dt); break;
+  }
+
+  if(G.waterFlash > 0) G.waterFlash -= dt*2;
+}
+
+function landFloat(){
+  setPhase('waiting');
+  SFX.splash();
+  addRipple(G.bob.x, HZ+6, 60, 1.1, 2.6);
+  spawnSplash(G.bob.x, HZ+2, 10, 110);
+
+  G.missCount = 0;
+  buildWaitPlan();
+
+  showBottom('strike');
+  hint('盯住浮漂！明显下沉或上顶时再提竿', 3200);
+}
+
+function buildWaitPlan(){
+  G.waitPlan = [];
+
+  // 中鱼率计算
+  const zone = G.zone;
+  const rodType = RODS[SAVE.rod].type;
+  const matchBonus = (zone.rod === rodType) ? 0.15 : -0.12;
+
+  const bait = BAITS[SAVE.currentBait || 'worm'] || BAITS.worm;
+  const baitBonus = bait.seasonBonus[G.season] || 0;
+  const easeBonus = zone.ease || 0;
+
+  let p = clamp(0.55 + matchBonus + baitBonus + easeBonus + (RODS[SAVE.rod].bonus||0), 0.08, 0.95);
+  const hasReal = Math.random() < p;
+
+  const speed = 1.0;
+  let t = rnd(0.9, 1.6)/speed;
+
+  const probes = rint(0, 2);
+  for(let i=0;i<probes;i++){
+    G.waitPlan.push({
+      at:t, type:'probe',
+      dur: rnd(0.30, 0.55),
+      dir: Math.random()<0.75 ? 'down' : 'up'
+    });
+    t += rnd(0.7, 1.4)/speed;
+  }
+
+  if(hasReal){
+    G.waitPlan.push({
+      at:t, type:'real',
+      dur: 1.05,
+      dir: Math.random()<0.72 ? 'down' : 'up'
+    });
+  }else{
+    // 无真口：多几次试探后自动收竿
+    G.waitPlan.push({at:t+1.5, type:'end'});
+  }
+}
+
+function updateWaiting(dt){
+  if(G.activeBite){
+    const b = G.activeBite;
+    const el = G.phaseT - b.start;
+    if(b.type === 'real'){
+      const p = clamp(el/0.11, 0, 1);
+      G.bob.targetOff = (b.dir==='down' ? 30 : -15) * easeOutCubic(p);
+    }else{
+      const p = clamp(el/0.09, 0, 1);
+      const e = p<0.5 ? easeOutCubic(p*2) : easeOutCubic((1-p)*2);
+      G.bob.targetOff = (b.dir==='down' ? 9 : -6) * e;
+    }
+
+    if(el > b.dur){
+      if(b.type === 'real'){
+        G.activeBite = null;
+        G.bob.targetOff = 0;
+        onMissBite();
+      }else{
+        G.activeBite = null;
+        G.bob.targetOff = 0;
+      }
+    }
+    return;
+  }
+
+  G.bob.targetOff = 0;
+  const next = G.waitPlan[0];
+  if(next && G.phaseT >= next.at){
+    G.waitPlan.shift();
+    if(next.type === 'end'){
+      setPhase('idle');
+      showBottom('cast');
+      toast('这一竿没鱼，换个位置再抛吧');
+      return;
+    }
+    G.activeBite = {
+      type: next.type,
+      start: G.phaseT,
+      dur: next.dur,
+      dir: next.dir
+    };
+    if(next.type === 'real'){
+      SFX.bite();
+      G.waterFlash = 1;
+      addRipple(G.bob.x, HZ+6, 46, 1.0, 2.4);
+      spawnSplash(G.bob.x, HZ+2, 5, 60);
+    }else{
+      SFX.probe();
+      addRipple(G.bob.x, HZ+6, 22, 0.6, 1.6);
+    }
+  }
+}
+
+function onMissBite(){
+  G.missCount++;
+  SFX.fail();
+  floatText('鱼吐钩了…', '#ff9b82');
+  hint('提竿晚了一步，鱼把钩吐掉了', 1800);
+
+  if(G.missCount >= 2){
+    setTimeout(()=>{
+      if(G.phase !== 'waiting') return;
+      setPhase('idle');
+      showBottom('cast');
+      toast('鱼跑了，再抛一竿吧');
+    }, 700);
+    return;
+  }
+  setTimeout(()=>{
+    if(G.phase !== 'waiting') return;
+    G.waitPlan = [];
+    let t = rnd(1.2, 2.2);
+    G.waitPlan.push({at:t, type:'real', dur:1.05, dir: Math.random()<0.72?'down':'up'});
+    G.phaseT = 0;
+  }, 800);
+}
+
+/* =========================================================
+   10. 提竿
+   ========================================================= */
+function onStrike(){
+  if(G.phase !== 'waiting') return;
+  audioInit();
+
+  const b = G.activeBite;
+
+  if(!b){
+    SFX.strike(); SFX.fail();
+    setPhase('idle');
+    G.bob.targetOff = 0;
+    showBottom('cast');
+    floatText('空 竿', '#ff9b82');
+    hint('提竿太早了！浮漂还没动呢', 2000);
+    addRipple(G.bob.x, HZ+6, 50, 0.8, 2);
+    SFX.smallSplash();
+    return;
+  }
+
+  if(b.type === 'probe'){
+    SFX.strike(); SFX.fail();
+    setPhase('idle');
+    G.activeBite = null;
+    G.bob.targetOff = 0;
+    showBottom('cast');
+    floatText('惊 鱼', '#ff9b82');
+    hint('这是小鱼在试探，不是真口！要等明显下沉', 2400);
+    addRipple(G.bob.x, HZ+6, 60, 0.9, 2.2);
+    spawnSplash(G.bob.x, HZ+2, 8, 100);
+    return;
+  }
+
+  SFX.strike();
+  SFX.smallSplash();
+  setPhase('strikeAnim');
+  G.bob.targetOff = b.dir==='down' ? 42 : -20;
+  addRipple(G.bob.x, HZ+6, 70, 1.0, 2.4);
+  spawnSplash(G.bob.x, HZ+2, 12, 130);
+  hideHint();
+  showBottom(null);
+  G.pendingFish = pickFish(G.streak);
+}
+
+function resetToCast(){
+  setPhase('idle');
+  G.activeBite = null;
+  G.bob.targetOff = 0;
+  G.waitPlan = [];
+  showBottom('cast');
+}
+
+/* =========================================================
+   11. 题库抽题 + 答题
+   ========================================================= */
+let currentQ=null, quizTimer=null, quizLeft=0, quizTotal=25, answered=false;
+
+function drawQuestion(){
+  const pool = BANK[SAVE.kid];
+  // 优先抽没答过的
+  const unseen = pool.filter(q => !SAVE.seen[q.id]);
+  const source = unseen.length ? unseen : pool;
+  return pick(source);
+}
+
+function openQuiz(){
+  setPhase('quiz');
+  answered = false;
+  hideScreens();
+
+  currentQ = drawQuestion();
+  SAVE.seen[currentQ.id] = true;
+  save();
+
+  quizTotal = SAVE.kid==='younger' ? 26 : 28;
+  quizLeft = quizTotal;
+
+  $('#q-topic').textContent = currentQ.tp;
+  $('#q-subject').textContent = currentQ.sub;
+  $('#q-text').textContent = currentQ.q;
+  $('#q-explain').style.display = 'none';
+  $('#q-streak').style.display = (G.streak>0) ? 'inline-block' : 'none';
+  $('#q-streak').textContent = '🔥 x' + (G.streak+1);
+
+  const box = $('#q-opts');
+  box.innerHTML = '';
+  const keys = ['A','B','C','D'];
+  currentQ.a.forEach((text,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="k">${keys[i]}</span><span>${text}</span>`;
+    btn.onclick = () => answer(i);
+    box.appendChild(btn);
+  });
+
+  showScreen('screen-quiz');
+
+  clearInterval(quizTimer);
+  const bar = $('#q-bar'), txt = $('#q-timer');
+  bar.style.width = '100%';
+  txt.textContent = quizTotal + 's';
+  txt.style.color = '';
+
+  quizTimer = setInterval(()=>{
+    quizLeft -= 0.1;
+    if(quizLeft <= 0){
+      quizLeft = 0;
+      bar.style.width = '0%';
+      txt.textContent = '0s';
+      clearInterval(quizTimer);
+      if(!answered) answer(-1);
+      return;
+    }
+    bar.style.width = (quizLeft/quizTotal*100) + '%';
+    txt.textContent = Math.ceil(quizLeft)+'s';
+    txt.style.color = quizLeft<=6 ? '#ff7a59' : '';
+  }, 100);
+}
+
+function answer(idx){
+  if(answered) return;
+  answered = true;
+  clearInterval(quizTimer);
+
+  const q = currentQ;
+  const ok = (idx === q.c);
+  const opts = $$('#q-opts .opt');
+
+  opts.forEach((el,i)=>{
+    el.disabled = true;
+    if(i === q.c) el.classList.add('right');
+    else if(i === idx) el.classList.add('wrong');
+  });
+
+  const ex = $('#q-explain');
+  ex.style.display = 'block';
+  ex.innerHTML = `<b>${ok?'✅ 刺鱼成功！':(idx===-1?'⏰ 超时了！':'❌ 答错了')}</b><br>正确答案：<b>${q.a[q.c]}</b><br>${q.e}`;
+
+  SAVE.byTopic[q.tp] = SAVE.byTopic[q.tp] || {ok:0,all:0};
+  SAVE.byTopic[q.tp].all++;
+
+  if(ok){
+    SAVE.byTopic[q.tp].ok++;
+    SAVE.correct++;
+    G.streak++;
+    SAVE.bestStreak = Math.max(SAVE.bestStreak, G.streak);
+
+    // 学识币奖励
+    const baseCoin = 5;
+    const streakCoin = Math.min(G.streak, 5) * 2;
+    const totalCoin = baseCoin + streakCoin;
+    SAVE.coins += totalCoin;
+    SFX.right();
+  }else{
+    SAVE.wrongCount++;
+    G.streak = 0;
+    SFX.wrong();
+    SAVE.wrong.unshift({q:q.q,right:q.a[q.c],sub:q.sub,tp:q.tp,e:q.e,t:Date.now()});
+    if(SAVE.wrong.length > 50) SAVE.wrong.pop();
+  }
+  save();
+  updateHUD();
+
+  // 检查奖章
+  checkMedals();
+
+  setTimeout(()=>{
+    hideScreens();
+    if(ok){
+      startFight();
+    }else{
+      SAVE.escaped++;
+      save();
+      showResultEscape();
+    }
+  }, 1500);
+}
+
+/* =========================================================
+   12. 奖章系统
+   ========================================================= */
+function checkMedals(){
+  TOPICS.forEach(tp=>{
+    const p = SAVE.byTopic[tp];
+    if(!p) return;
+    const rate = p.all ? p.ok/p.all : 0;
+    if(p.ok >= 12 && rate >= 0.75 && !SAVE.medals[tp]){
+      SAVE.medals[tp] = true;
+      SFX.medal();
+      toast('🏅 获得「' + tp + '」奖章！');
+    }
+  });
+  save();
+}
+
+function isThreeGood(){
+  return TOPICS.every(tp => SAVE.medals[tp]);
+}
+
+/* =========================================================
+   13. 遛鱼
+   ========================================================= */
+function startFight(){
+  setPhase('fight');
+  const fish = G.pendingFish;
+  G.fight = {
+    t:0, progress:8, tension:35, fatigue:0,
+    surge:0, nextSurge:rnd(1.2,2.2),
+    reeling:false, redT:0,
+    fish:fish,
+    power: fish.rare >= 3 ? 0.9 : (fish.rare===2 ? 0.7 : (fish.rare===1 ? 0.5 : 0.35)),
+    tough: fish.rare >= 3 ? 30 : (fish.rare===2 ? 22 : (fish.rare===1 ? 16 : 11)),
+    lastTick:0, dead:false
+  };
+  showReel(true);
+  hint('按住「收线」，张力变红就松手！', 3200);
+}
+
+function updateFight(dt){
+  const f = G.fight;
+  if(!f || f.dead) return;
+  f.t += dt;
+  f.fatigue = Math.min(1, f.t/f.tough);
+
+  if(f.surge > 0){
+    f.surge -= dt;
+    /* 鱼发力：张力上涨，及时松手能卸掉一部分 */
+    f.tension += (22 + f.power*48) * (1 - f.fatigue*0.45) * dt;
+    if(!f.reeling) f.tension -= 28*dt;
+  }else{
+    f.nextSurge -= dt;
+    if(f.nextSurge <= 0){
+      f.surge = rnd(0.45,1.0)*(1 - f.fatigue*0.3);
+      f.nextSurge = rnd(1.6,3.2)*(1 - f.fatigue*0.35) + 0.6;
+      SFX.surge();
+      addRipple(G.bob.x, HZ+6, 40, 0.7, 2);
+    }
+
+    if(f.reeling){
+      f.tension += (34 + f.power*26)*(1 - f.fatigue*0.4)*dt;
+      f.progress += (17 + 14*(1-f.power))*dt;
+    }else{
+      f.tension -= 45*dt;
+      f.progress -= 2.8*dt;
+    }
+  }
+
+  f.tension = clamp(f.tension, 0, 100);
+  f.progress = clamp(f.progress, 0, 100);
+
+  if(f.tension > 96){
+    f.redT += dt;
+    if(f.redT > 0.7){ lineBreak(); return; }
+  }else{
+    f.redT = Math.max(0, f.redT - dt*2);
+  }
+
+  if(f.reeling && f.tension < 96){
+    f.lastTick += dt;
+    if(f.lastTick > 0.09){ f.lastTick = 0; SFX.reelTick(); }
+  }
+
+  if(f.progress >= 100){ landFish(); return; }
+
+  updateReelUI();
+}
+
+function lineBreak(){
+  const f = G.fight;
+  if(!f) return;
+  f.dead = true;
+  SFX.snap();
+  SAVE.broken++;
+  save();
+  showReel(false);
+
+  for(let i=0;i<16;i++){
+    G.splashes.push({
+      x:G.bob.x+rnd(-20,20), y:HZ+rnd(-4,6),
+      vx:rnd(-90,90), vy:rnd(-220,-60),
+      r:rnd(1.2,3), life:rnd(0.4,0.9)
+    });
+  }
+  addRipple(G.bob.x, HZ+6, 80, 1.0, 2.6);
+
+  setTimeout(()=>{
+    setPhase('result');
+    showResultBreak();
+  }, 500);
+}
+
+function landFish(){
+  const f = G.fight;
+  if(!f) return;
+  f.dead = true;
+  showReel(false);
+
+  const fish = f.fish;
+  SAVE.plays++;
+  SAVE.dex[fish.id] = (SAVE.dex[fish.id]||0) + 1;
+
+  const baseCoin = [3,6,10,18][fish.rare];
+  const streakBonus = Math.min(G.streak, 5);
+  const gain = baseCoin + streakBonus;
+  SAVE.coins += gain;
+  save();
+  updateHUD();
+
+  for(let i=0;i<22;i++){
+    G.splashes.push({
+      x:G.bob.x+rnd(-26,26), y:HZ+rnd(-6,8),
+      vx:rnd(-140,140), vy:rnd(-300,-90),
+      r:rnd(1.5,4), life:rnd(0.5,1.0)
+    });
+  }
+  addRipple(G.bob.x, HZ+6, 100, 1.2, 3);
+
+  if(fish.rare >= 2) SFX.legendary();
+  else SFX.right();
+
+  setTimeout(()=>{
+    setPhase('result');
+    showResultCatch(fish, gain);
+  }, 420);
+}
+
+let reelPressing = false;
+function showReel(on){
+  $('#reelUi').classList.toggle('active', !!on);
+  if(on) updateReelUI();
+}
+function updateReelUI(){
+  const f = G.fight;
+  if(!f) return;
+  const tb = $('#rb-tension'), pb = $('#rb-progress');
+  tb.style.width = f.tension + '%';
+  pb.style.width = f.progress + '%';
+  if(f.tension > 96){
+    tb.style.background = 'linear-gradient(90deg,#ff3b30,#ff7a59)';
+    tb.style.boxShadow = '0 0 14px rgba(255,59,48,.8)';
+  }else if(f.tension > 78){
+    tb.style.background = 'linear-gradient(90deg,#ffcf5c,#ff9b3d)';
+    tb.style.boxShadow = '0 0 10px rgba(255,155,61,.5)';
+  }else{
+    tb.style.background = 'linear-gradient(90deg,#4ecdc4,#7ed957)';
+    tb.style.boxShadow = 'none';
+  }
+}
+function setReeling(v){
+  if(G.phase !== 'fight' || !G.fight || G.fight.dead) return;
+  G.fight.reeling = v;
+  audioInit();
+}
+
+const reelBtn = $('#reelBtn');
+reelBtn.addEventListener('pointerdown', e=>{ e.preventDefault(); setReeling(true); });
+reelBtn.addEventListener('pointerup', e=>{ e.preventDefault(); setReeling(false); });
+reelBtn.addEventListener('pointercancel', ()=>setReeling(false));
+reelBtn.addEventListener('pointerleave', ()=>setReeling(false));
+
+window.addEventListener('keydown', e=>{
+  if(e.code === 'Space'){
+    e.preventDefault();
+    if(G.phase === 'fight') setReeling(true);
+    else if(G.phase === 'waiting') onStrike();
+  }
+});
+window.addEventListener('keyup', e=>{
+  if(e.code === 'Space' && G.phase === 'fight') setReeling(false);
+});
+
+/* =========================================================
+   14. 结果展示
+   ========================================================= */
+function showResultCatch(fish, gain){
+  hideScreens();
+  $('#r-title').textContent = '上 岸 了！';
+  $('#r-rare').textContent = '★'.repeat(fish.rare+1) + ' ' + RARITY[fish.rare].name;
+  $('#r-rare').style.color = RARITY[fish.rare].color;
+  $('#r-desc').innerHTML = `
+    <b style="color:#fff;font-size:17px">${fish.name}</b><br>
+    ${fish.desc}<br><br>
+    <span style="color:#ffcf5c">🪙 +${gain} 学识币</span>
+  `;
+  drawResultFish(fish, true);
+  showScreen('screen-result');
+  resetToCast();
+}
+
+function showResultBreak(){
+  hideScreens();
+  $('#r-title').textContent = '切 线 了！';
+  $('#r-rare').textContent = '💔 断线跑鱼';
+  $('#r-rare').style.color = '#ff7a59';
+  $('#r-desc').innerHTML = `
+    张力太大，鱼线“啪”地一声断了。<br>
+    鱼带着你的钩跑掉了……<br><br>
+    <span style="color:#8fb6cc;font-size:12px">小提示：张力变红时松一松手。</span>
+  `;
+  drawResultFish(G.pendingFish || FISH.jiyu, false);
+  showScreen('screen-result');
+  resetToCast();
+}
+
+function showResultEscape(){
+  hideScreens();
+  $('#r-title').textContent = '脱 钩 了…';
+  $('#r-rare').textContent = '鱼甩头跑了';
+  $('#r-rare').style.color = '#ff9b82';
+  $('#r-desc').innerHTML = `
+    答案不对，鱼一甩头就把钩子吐掉了。<br>
+    看看正确答案，下次一定能钓上来！<br><br>
+    <span style="color:#8fb6cc;font-size:12px">小提示：提竿要准，答题也要准。</span>
+  `;
+  drawResultFish(G.pendingFish || FISH.jiyu, false);
+  showScreen('screen-result');
+  resetToCast();
+}
+
+function drawResultFish(fish, alive){
+  const cv = $('#result-fish');
+  const c = cv.getContext('2d');
+  let tt = 0;
+  function anim(){
+    tt += 0.045;
+    c.clearRect(0,0,cv.width,cv.height);
+    const g = c.createRadialGradient(130,70,4,130,70,105);
+    g.addColorStop(0, alive ? 'rgba(255,255,255,.14)' : 'rgba(255,120,90,.10)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g;
+    c.fillRect(0,0,260,140);
+
+    if(alive){
+      const yy = 70 + Math.sin(tt*2)*4;
+      drawFish(c, 130, yy, 56, fish, tt, 1, 1);
+    }else{
+      const yy = 80 + Math.sin(tt*1.2)*3;
+      c.save();
+      c.globalAlpha = 0.45;
+      drawFish(c, 130, yy, 48, fish, tt*0.6, -1, 0.8);
+      c.restore();
+      c.strokeStyle = 'rgba(255,255,255,.3)';
+      c.lineWidth = 1.5;
+      c.setLineDash([4,5]);
+      c.beginPath();
+      c.moveTo(130, 10);
+      c.lineTo(130, yy-30);
+      c.stroke();
+      c.setLineDash([]);
+    }
+    if(tt < 30) requestAnimationFrame(anim);
+  }
+  anim();
+}
+
+/* =========================================================
+   15. 抽鱼
+   ========================================================= */
+function pickFish(streak){
+  const zone = G.zone;
+  const zoneFish = FISH_LIST_FOR_ZONE(zone);
+  if(!zoneFish.length) return FISH.jiyu;
+
+  const rodType = RODS[SAVE.rod].type;
+  const match = (zone.rod === rodType);
+
+  // 匹配时高稀有度几率提升
+  const bonus = Math.min(streak*4, 35) + (match?15:0);
+  const r = Math.random()*100;
+
+  let rareIdx;
+  if(r < 2 + bonus*0.3) rareIdx = 3;
+  else if(r < 13 + bonus*0.8) rareIdx = 2;
+  else if(r < 38 + bonus*1.4) rareIdx = 1;
+  else rareIdx = 0;
+
+  let pool = zoneFish.filter(f=>f.rare === rareIdx);
+  if(!pool.length) pool = zoneFish.filter(f=>f.rare <= rareIdx+1);
+  if(!pool.length) pool = zoneFish;
+
+  // 海钓：饵料决定咬钩的鱼（沙蚕钓底层鱼，虾钓肉食鱼）
+  if(zone.type === 'sea' && pool.length > 1){
+    const cur = SAVE.currentBait;
+    let total = 0; const w = pool.map(f=>{ const k = (f.prefer === cur) ? 3 : 1; total += k; return k; });
+    let t = Math.random()*total;
+    for(let i=0;i<pool.length;i++){ t -= w[i]; if(t <= 0) return pool[i]; }
+  }
+  return pick(pool);
+}
+
+/* =========================================================
+   16. 粒子
+   ========================================================= */
+function addRipple(x,y,size,life,width){
+  G.ripples.push({x,y,size,life,max:life,w:width});
+}
+function spawnSplash(x,y,n,speed){
+  for(let i=0;i<n;i++){
+    G.splashes.push({
+      x:x+rnd(-8,8), y:y,
+      vx:rnd(-speed*0.5,speed*0.5),
+      vy:rnd(-speed,-speed*0.4),
+      r:rnd(1,2.6), life:rnd(0.35,0.8)
+    });
+  }
+}
+function floatText(text,color){
+  G.floaters.push({x:W*0.5,y:H*0.36,text,color,life:1.3});
+}
+
+/* =========================================================
+   17. UI 绑定
+   ========================================================= */
+function showBottom(which){
+  const b = $('#bottom');
+  const cast = $('#btn-cast'), strike = $('#btn-strike');
+  cast.style.display = 'none';
+  strike.style.display = 'none';
+  if(!which){ b.classList.remove('active'); return; }
+  b.classList.add('active');
+  if(which === 'cast') cast.style.display = 'block';
+  else if(which === 'strike') strike.style.display = 'block';
+}
+function showScreen(id){ $$('.screen').forEach(s=>s.classList.toggle('active', s.id === id)); }
+function hideScreens(){ $$('.screen').forEach(s=>s.classList.remove('active')); }
+
+function updateHUD(){
+  $('#hud-coins').textContent = SAVE.coins;
+  $('#hud-rod').textContent = RODS[SAVE.rod] ? RODS[SAVE.rod].name.split(' ')[0] : '竹竿';
+  const baitId = SAVE.currentBait || 'worm';
+  const bait = BAITS[baitId];
+  const cnt = SAVE.baits[baitId];
+  $('#hud-bait').textContent = bait.name + (cnt===Infinity ? '' : '×'+cnt);
+  $('#hud-season').textContent = SEASON_NAME[G.season];
+  const kidEl = $('#hud-kid');
+  if(kidEl) kidEl.textContent = SAVE.kid==='younger'?'弟弟':'姐姐';
+}
+
+function refreshHome(){
+  $$('.kidcard').forEach(el=>el.classList.toggle('sel', el.dataset.kid === SAVE.kid));
+  updateHUD();
+}
+
+/* --- 抛竿入口 --- */
+function enterCastFlow(){
+  audioInit();
+  if(G.phase !== 'idle') return;
+  // 打开饵料选择
+  buildBaitList();
+  showScreen('screen-bait');
+}
+
+function zoneWater(z){ return z && z.type==='sea' ? 'sea' : 'fresh'; }
+
+function doCast(){
+  const baitId = SAVE.currentBait || 'worm';
+  const bait = BAITS[baitId] || BAITS.worm;
+  if(bait.water !== zoneWater(G.zone)){
+    toast(bait.water==='sea' ? '这里是淡水，海钓饵料不适用' : '海钓要用沙蚕或虾，淡水饵不咬钩');
+    return;
+  }
+  if(SAVE.baits[baitId] !== Infinity && SAVE.baits[baitId] <= 0){
+    toast('饵料用完了，去商店补充吧');
+    return;
+  }
+  if(SAVE.baits[baitId] !== Infinity) SAVE.baits[baitId]--;
+  save();
+  updateHUD();
+
+  hideScreens();
+  hideHint();
+  G.castP = 0;
+  G.pendingFish = null;
+  G.activeBite = null;
+  G.bob.targetOff = 0;
+  G.bob.off = 0;
+  G.castFrom.x = G.rodTip.x;
+  G.castFrom.y = G.rodTip.y;
+  G.castTarget.x = W*(0.56 + Math.random()*0.14);
+  G.castTarget.y = HZ + 6;
+  G.bob.x = G.castFrom.x;
+  G.bob.y = G.castFrom.y;
+  setPhase('casting');
+  showBottom(null);
+  SFX.cast();
+}
+
+/* --- 饵料列表 --- */
+function buildBaitList(){
+  const box = $('#bait-list');
+  box.innerHTML = '';
+  const tip = $('#bait-season-tip');
+  const seasonName = {spring:'春季',summer:'夏季',autumn:'秋季',winter:'冬季'}[G.season];
+  const water = zoneWater(G.zone);
+  const list = Object.values(BAITS).filter(b=>b.water===water);
+
+  // 当前饵料和钓点不匹配时，自动换成该水域可用的饵
+  if(!list.some(b=>(SAVE.currentBait||'worm')===b.id)){
+    const usable = list.find(b=>SAVE.baits[b.id]===Infinity || (SAVE.baits[b.id]||0)>0) || list[0];
+    SAVE.currentBait = usable.id;
+    save(); updateHUD();
+  }
+
+  tip.textContent = water==='sea'
+    ? `近海钓点：${seasonName}。沙蚕钓底栖鱼（楞蹦鱼、梭鱼、白眼鱼、河豚），虾钓肉食鱼（鲈鱼、石斑、金枪鱼）。`
+    : `${G.zone.name}：${seasonName}。${G.season==='summer'||G.season==='autumn' ? '夏秋野战蓝鲫效果好！' : '春秋红虫中鱼率高！'}`;
+
+  list.forEach(b=>{
+    const cnt = SAVE.baits[b.id];
+    const sel = (SAVE.currentBait||'worm') === b.id;
+    const div = document.createElement('div');
+    div.className = 'baititem' + (sel?' sel':'');
+    const seasonB = b.seasonBonus[G.season] || 0;
+    const seasonTip = seasonB > 0.2 ? '⭐旺季' : (seasonB > 0.05 ? '合适' : '一般');
+    div.innerHTML = `
+      <div class="ic">${b.icon}</div>
+      <div class="nm">${b.name}</div>
+      <div class="ds">${b.desc}<br>${seasonTip}</div>
+      <div class="ct ${cnt===0?'zero':''}">${cnt===Infinity?'无限':'×'+cnt}</div>
+    `;
+    div.onclick = ()=>{
+      if(cnt !== Infinity && cnt <= 0){
+        toast('没有' + b.name + '了，去商店买');
+        return;
+      }
+      SAVE.currentBait = b.id;
+      save();
+      updateHUD();
+      buildBaitList();
+    };
+    box.appendChild(div);
+  });
+}
+
+/* --- 水域列表 --- */
+function dexCount(){ return Object.keys(SAVE.dex).filter(k=>SAVE.dex[k]>0).length; }
+
+function buildZoneList(){
+  const box = $('#zone-list');
+  box.innerHTML = '';
+  const got = dexCount();
+  ZONES.forEach(z=>{
+    const rodType = RODS[SAVE.rod].type;
+    const match = (z.rod === rodType);
+    const unlocked = got >= (z.dexReq||0);
+    const div = document.createElement('div');
+    div.className = 'zone' + (unlocked?'':' lock');
+    div.innerHTML = `
+      <div class="zi">${unlocked?z.icon:'🔒'}</div>
+      <div style="flex:1;min-width:0">
+        <div class="zn">${z.name}<span style="font-size:11px;color:#ffcf5c;margin-left:6px;letter-spacing:1px;text-shadow:0 0 6px rgba(255,207,92,.45)">${z.stars}</span></div>
+        <div class="zd">${z.desc}<br>建议：${ROD_TYPE_NAME[z.rod]}${unlocked&&match?' · ✅竿匹配':''}</div>
+      </div>
+      <div class="${unlocked?'zs':'req'}">${unlocked?(match?'推荐 →':'进入 →'):'需图鉴 '+z.dexReq+' 种'}</div>
+    `;
+    div.onclick = ()=>{
+      audioInit();
+      if(!unlocked){
+        toast('先收集 ' + z.dexReq + ' 种鱼才能来这里（现在 ' + got + ' 种）');
+        return;
+      }
+      G.zone = z;
+      SAVE.zone = z.id;
+      // 换钓点时自动切换到该水域能用的饵料
+      const baitList = Object.values(BAITS).filter(b=>b.water===zoneWater(z));
+      if(!baitList.some(b=>(SAVE.currentBait||'worm')===b.id)){
+        SAVE.currentBait = baitList[0].id;
+        if(z.type==='sea' && (SAVE.baits[baitList[0].id]||0) <= 0){
+          setTimeout(()=>toast('海钓要用沙蚕或虾，记得先去商店买饵'), 700);
+        }
+      }
+      save();
+      updateHUD();
+      G.deepFishes = Array.from({length:5},()=>makeDeepFish());
+      hideScreens();
+      resetToCast();
+      toast('到达 ' + z.name);
+    };
+    box.appendChild(div);
+  });
+}
+
+/* --- 商店 --- */
+function openShop(){
+  audioInit();
+  updateShopUI();
+  showScreen('screen-shop');
+}
+function updateShopUI(){
+  $('#shop-coins').textContent = SAVE.coins;
+
+  // 饵料
+  const box = $('#shop-baits');
+  box.innerHTML = '';
+  const groups = [
+    {water:'fresh', label:'淡水饵料'},
+    {water:'sea',   label:'海钓饵料（海竿专用）'}
+  ];
+  groups.forEach(g=>{
+    const head = document.createElement('div');
+    head.style.cssText = 'grid-column:1/-1;font-size:11px;color:#8fb6cc;font-weight:700;margin:2px 0 -2px';
+    head.textContent = g.label;
+    box.appendChild(head);
+    Object.values(BAITS).filter(b=>b.water===g.water && b.price>0).forEach(b=>{
+      const cnt = SAVE.baits[b.id] || 0;
+      const div = document.createElement('div');
+      div.className = 'shopitem';
+      div.innerHTML = `
+        <div class="ic">${b.icon}</div>
+        <div class="nm">${b.name}</div>
+        <div class="ds">${b.desc}<br>库存：${cnt}</div>
+        <div class="pr">🪙 ${b.price} /份</div>
+        <button class="btn small">购买</button>
+      `;
+      div.querySelector('button').onclick = ()=>{
+        if(SAVE.coins < b.price){ toast('学识币不够'); return; }
+        SAVE.coins -= b.price;
+        SAVE.baits[b.id] = (SAVE.baits[b.id]||0) + 1;
+        // 只有钓点水域对得上才顺手切换，避免海钓时换成淡水饵
+        if(b.water === zoneWater(G.zone)) SAVE.currentBait = b.id;
+        save(); updateHUD(); updateShopUI();
+        SFX.buy();
+        toast('购买成功！');
+      };
+      box.appendChild(div);
+    });
+  });
+
+  // 鱼竿
+  const rbox = $('#shop-rods');
+  rbox.innerHTML = '';
+  Object.entries(RODS).forEach(([id,r])=>{
+    if(id === 'bamboo') return;
+    const owned = !!SAVE.ownedRods[id];
+    const using = SAVE.rod === id;
+    const div = document.createElement('div');
+    div.className = 'shopitem' + (owned?' owned':'') + (using?' using':'');
+    div.innerHTML = `
+      <div class="ic">${r.icon}</div>
+      <div class="nm">${r.name}</div>
+      <div class="ds">${ROD_TYPE_NAME[r.type]} · ${r.desc}<br>中鱼加成 +${(r.bonus*100).toFixed(0)}%</div>
+      <div class="pr">${owned?'已拥有':'🪙 '+r.price}</div>
+      <button class="btn small">${using?'使用中':(owned?'使用':'购买')}</button>
+    `;
+    div.querySelector('button').onclick = ()=>{
+      if(using){ toast('正在使用'); return; }
+      if(owned){
+        SAVE.rod = id; save(); updateHUD(); updateShopUI(); SFX.buy();
+        toast('已装备 ' + r.name);
+      }else{
+        if(SAVE.coins < r.price){ toast('学识币不够'); return; }
+        SAVE.coins -= r.price;
+        SAVE.ownedRods[id] = true;
+        SAVE.rod = id;
+        save(); updateHUD(); updateShopUI(); SFX.buy();
+        toast('购买并装备成功！');
+      }
+    };
+    rbox.appendChild(div);
+  });
+}
+
+/* --- 图鉴 --- */
+function openDex(){
+  audioInit();
+  const grid = $('#dex-grid');
+  grid.innerHTML = '';
+  let owned = 0;
+
+  Object.entries(FISH).forEach(([id,f])=>{
+    const cnt = SAVE.dex[id] || 0;
+    if(cnt > 0) owned++;
+    const card = document.createElement('div');
+    card.className = 'dexcard' + (cnt?'':' locked');
+    card.innerHTML = `
+      ${cnt ? `<div class="cnt">×${cnt}</div>` : ''}
+      <canvas width="100" height="66"></canvas>
+      <div class="nm">${cnt ? f.name : '？？？'}</div>
+      <div class="rl" style="color:${RARITY[f.rare].color}">${RARITY[f.rare].name}</div>
+    `;
+    grid.appendChild(card);
+
+    const c = card.querySelector('canvas').getContext('2d');
+    if(cnt){
+      drawFish(c, 50, 33, 32+f.rare*3, f, 1.2, 1, 1);
+    }else{
+      c.save();
+      c.globalAlpha = 0.45;
+      drawFish(c, 50, 33, 30, f, 1.2, 1, 0.7);
+      c.restore();
+    }
+  });
+
+  $('#dex-count').textContent = `已收集 ${owned} / ${Object.keys(FISH).length} 种 · 学识币 🪙${SAVE.coins}`;
+  showScreen('screen-dex');
+}
+
+/* --- 奖章 --- */
+function openMedal(){
+  audioInit();
+  const box = $('#medal-list');
+  box.innerHTML = '';
+  TOPICS.forEach(tp=>{
+    const p = SAVE.byTopic[tp] || {ok:0,all:0};
+    const rate = p.all ? Math.round(p.ok/p.all*100) : 0;
+    const on = !!SAVE.medals[tp];
+    const pct = Math.min(100, Math.round(p.ok/12*100));
+    const div = document.createElement('div');
+    div.className = 'medal' + (on?' on':'');
+    div.innerHTML = `
+      <div class="ic">${on?'🏅':'⚪'}</div>
+      <div class="nm">${tp}</div>
+      <div class="pg">答对 ${p.ok} 题 · 正确率 ${rate}%</div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+    `;
+    box.appendChild(div);
+  });
+
+  const certArea = $('#cert-area');
+  if(isThreeGood()){
+    certArea.innerHTML = `
+      <div class="cert">
+        <div class="t">🏆 三 好 学 生</div>
+        <div class="s">
+          恭喜你集齐四大学科奖章！<br>
+          数与代数 · 图形与几何 · 统计与概率 · 数学广角<br>
+          <b style="color:#ffcf5c">你是真正的小小钓鱼王 + 三好学生！</b>
+        </div>
+      </div>
+    `;
+    SFX.legendary();
+  }else{
+    certArea.innerHTML = '';
+  }
+
+  const tip = $('#medal-tip');
+  tip.textContent = `每个板块答对12题且正确率≥75%可点亮奖章，集齐4个就是三好学生！`;
+  showScreen('screen-medal');
+}
+
+/* --- 家长 --- */
+function openParent(){
+  audioInit();
+  const total = SAVE.correct + SAVE.wrongCount;
+  const acc = total ? Math.round(SAVE.correct/total*100) : 0;
+
+  let subjHtml = '';
+  TOPICS.forEach(tp=>{
+    const v = SAVE.byTopic[tp] || {ok:0,all:0};
+    const a = v.all ? Math.round(v.ok/v.all*100) : 0;
+    subjHtml += `<div class="stat"><b>${a}%</b><span>${tp}（${v.ok}/${v.all}）</span></div>`;
+  });
+
+  $('#p-stats').innerHTML = `
+    <div class="stat"><b>${acc}%</b><span>总正确率</span></div>
+    <div class="stat"><b>${total}</b><span>总答题数</span></div>
+    <div class="stat"><b>${SAVE.bestStreak}</b><span>最高连击</span></div>
+    <div class="stat"><b>${SAVE.coins}</b><span>学识币</span></div>
+    <div class="stat"><b>${SAVE.plays}</b><span>成功上鱼</span></div>
+    <div class="stat"><b>${SAVE.broken}</b><span>切线次数</span></div>
+    ${subjHtml}
+  `;
+
+  const wbox = $('#p-wrong');
+  if(!SAVE.wrong.length){
+    wbox.innerHTML = '<div class="sub">还没有错题，继续保持！🎉</div>';
+  }else{
+    wbox.innerHTML = SAVE.wrong.slice(0,20).map(w=>`
+      <div class="wrongitem">
+        <div class="qq">【${w.tp}·${w.sub}】${w.q}</div>
+        <div class="aa">✔ 正确答案：${w.right}</div>
+        <div style="color:#8fb6cc;margin-top:4px;font-size:11px">${w.e}</div>
+      </div>
+    `).join('');
+  }
+
+  showScreen('screen-parent');
+}
+
+/* --- 事件绑定 --- */
+$$('.kidcard').forEach(el=>{
+  el.onclick = ()=>{
+    audioInit();
+    SAVE.kid = el.dataset.kid;
+    // 切换孩子时重置连击
+    G.streak = 0;
+    save();
+    refreshHome();
+    toast(SAVE.kid==='younger' ? '已切换：弟弟（四年级）' : '已切换：姐姐（六年级）');
+  };
+});
+
+$('#btn-start').onclick = ()=>{ audioInit(); buildZoneList(); showScreen('screen-zone'); };
+$('#btn-zone-back').onclick = ()=>{ hideScreens(); showScreen('screen-home'); };
+$('#btn-bait-back').onclick = ()=>{ hideScreens(); resetToCast(); };
+$('#btn-cast-now').onclick = doCast;
+
+$('#hud-shop').onclick = openShop;
+$('#btn-shop-back').onclick = ()=>{ hideScreens(); resetToCast(); };
+$('#hud-dex').onclick = openDex;
+$('#btn-dex-back').onclick = ()=>{ hideScreens(); showScreen('screen-home'); };
+$('#hud-medal').onclick = openMedal;
+$('#btn-medal-back').onclick = ()=>{ hideScreens(); showScreen('screen-home'); };
+$('#hud-parent').onclick = openParent;
+$('#btn-parent-back').onclick = ()=>{ hideScreens(); showScreen('screen-home'); };
+
+$('#btn-cast').onclick = enterCastFlow;
+$('#btn-strike').onclick = onStrike;
+
+$('#btn-again').onclick = ()=>{
+  hideScreens();
+  resetToCast();
+  setTimeout(enterCastFlow, 240);
+};
+
+$('#btn-home').onclick = ()=>{
+  hideScreens();
+  resetToCast();
+  showScreen('screen-home');
+  refreshHome();
+};
+
+$('#btn-reset').onclick = ()=>{
+  if(confirm('确定要清空所有进度吗？图鉴、学识币、错题都会重置。')){
+    SAVE = cloneSave();
+    G.streak = 0;
+    save(); updateHUD(); refreshHome(); openParent();
+    toast('进度已重置');
+  }
+};
+
+/* =========================================================
+   18. 主循环
+   ========================================================= */
+let lastTime = performance.now();
+function loop(now){
+  const dt = Math.min((now-lastTime)/1000 || 0, 0.05);
+  lastTime = now;
+  G.t += dt;
+  G.phaseT += dt;
+
+  // 抛竿飞行插值
+  if(G.phase === 'casting'){
+    const p = G.castP;
+    const e = easeOutCubic(p);
+    G.bob.x = G.castFrom.x + (G.castTarget.x - G.castFrom.x) * e;
+    G.bob.y = G.castFrom.y + (G.castTarget.y - G.castFrom.y) * e - Math.sin(p*Math.PI)*130;
+  }
+
+  update(dt);
+  drawScene(dt);
+  requestAnimationFrame(loop);
+}
+
+/* =========================================================
+   19. 启动
+   ========================================================= */
+resize();
+G.season = getSeason();
+initDeco();
+const got0 = dexCount();
+G.zone = ZONES.find(z=>z.id === SAVE.zone && got0 >= (z.dexReq||0)) || ZONES[0];
+SAVE.zone = G.zone.id;
+G.deepFishes = Array.from({length:5},()=>makeDeepFish());
+G.streak = 0;
+SAVE.currentBait = SAVE.currentBait || 'worm';
+refreshHome();
+updateHUD();
+showBottom('cast');
+setPhase('idle');
+requestAnimationFrame(loop);
+
+let rt;
+window.addEventListener('resize', ()=>{
+  clearTimeout(rt);
+  rt = setTimeout(()=>{ resize(); initDeco(); G.deepFishes = Array.from({length:5},()=>makeDeepFish()); }, 180);
+});
+</script>
+
+</body></html>
